@@ -1,0 +1,112 @@
+Project Specification: Global AI Text Assistant
+===============================================
+
+**Overview** This document outlines the architecture, user experience, and technical implementation for an OS-wide, AI-powered productivity tool. Built on the Tauri v2 framework, this application allows users to instantly rephrase text or draft replies inside *any* application (Google Chrome, Slack, MS Word, Outlook, etc.) using local or cloud-based AI models.
+
+* * * * *
+
+1\. The Core Concept
+--------------------
+
+The application acts as a "Ghostwriter" that lives entirely in the background of your operating system. Because it is impossible to inject a custom "Right-Click" menu into every third-party application, this tool utilizes the industry-standard **"Global Hotkey + Clipboard"** architecture.
+
+It completely bypasses application restrictions to provide a universal, frictionless AI text experience.
+
+2\. Key Features
+----------------
+
+### Feature A: The Smart Rephraser
+
+Users can highlight a poorly worded sentence, press a hotkey, and instantly get a polished version.
+
+-   **Style Presets:** Users can rephrase text into various tones (e.g., *Professional, Friendly, Concise, Academic, Pirate*).
+
+-   **On-the-Fly Selection:** A setting allows users to either automatically apply a default style, or pop up a quick menu asking which style to use for this specific text.
+
+### Feature B: The Context-Aware Replier
+
+Users can highlight an incoming message or email, press a hotkey, and have the AI draft a complete response based on their personal context.
+
+-   **Persona Configuration:** Users can configure their "Identity" in the settings (e.g., *Name: Vinz, Bio: Frontend Developer from Italy, Communication Style: Polite but direct and brief*).
+
+-   **Smart Prompting:** The AI receives the highlighted email alongside the user's persona context to generate an accurate, personalized reply.
+
+* * * * *
+
+3\. The User Experience (UX) Flow
+---------------------------------
+
+The UI takes inspiration from tools like Apple Spotlight or Raycast---it is designed to be invisible until needed, and lightning-fast when called.
+
+1.  **Highlight:** The user highlights text in any application (e.g., an email in Outlook).
+
+2.  **Trigger:** The user presses the global hotkey (`Ctrl + Alt + C`).
+
+3.  **The OS Hack:** In the background, the Rust backend instantly simulates pressing `Ctrl + C` on the user's keyboard, forcing the target app to copy the text to the system clipboard.
+
+4.  **The UI Reveal:** A sleek, frameless, transparent glassmorphism window instantly pops up in the dead center of the screen.
+
+5.  **AI Processing:** The UI displays the captured text and immediately streams the AI's rephrased version or drafted reply.
+
+6.  **Resolution:** The user clicks a "Copy to Clipboard" button (or hits `Enter`), the UI vanishes back into the background, and the user can simply hit `Ctrl + V` to paste the result into their app.
+
+* * * * *
+
+4\. Technical Architecture
+--------------------------
+
+### Tech Stack
+
+-   **Framework:** Tauri v2 (for tiny binary size and instant boot times).
+
+-   **Backend:** Rust (for OS-level keyboard and clipboard manipulation).
+
+-   **Frontend:** React + TypeScript + CSS (for the glassmorphism UI).
+
+-   **AI Engine:** Integration with local Ollama models (for privacy) or cloud APIs (OpenAI, Anthropic, Gemini).
+
+### Required Rust Crates & Plugins
+
+1.  `tauri-plugin-global-shortcut`: Allows the app to listen for `Ctrl + Alt + C` even when the application window is hidden or out of focus.
+
+2.  `enigo`: A Rust library that simulates hardware mouse and keyboard events. This is used to fire the fake `Ctrl + C` command to grab the user's highlighted text.
+
+3.  `arboard`: A cross-platform Rust crate to safely read from and write to the OS clipboard.
+
+* * * * *
+
+5\. Configuration & Settings Menu
+---------------------------------
+
+The application will feature a dedicated Settings window where users can customize their experience:
+
+**AI Provider Settings (Similar to GitPop):**
+
+-   Provider Selection (Ollama, OpenAI, Custom API, etc.).
+
+-   Model Selection.
+
+**Rephraser Settings:**
+
+-   **Default Tone:** Dropdown to select the primary rephrasing style.
+
+-   **Ask me every time:** Boolean toggle. If true, pressing the hotkey opens a mini-menu asking which tone to use before generating.
+
+**Smart Reply Settings:**
+
+-   **User Name:** Text input.
+
+-   **Context/Bio:** A text area where the user explains who they are and how they normally communicate so the AI can mimic them.
+
+* * * * *
+
+6\. Future / Advanced Features (Phase 2)
+----------------------------------------
+
+Once the core architecture is built, the following features can be added to make it even more magical:
+
+-   **Auto-Replace:** Instead of just copying the result to the clipboard, the Rust backend can simulate `Ctrl + V` right after generation. This means the user highlights text, presses the hotkey, and the text in their Word document *magically transforms* into the better version without them ever pasting it manually.
+
+-   **Dual Hotkeys:** Registering `Ctrl + Alt + C` for the Rephraser, and `Ctrl + Alt + R` for the Smart Replier, saving the user from having to choose the mode in the UI.
+
+This architecture guarantees a premium, native-feeling tool that works flawlessly across the entire operating system!
