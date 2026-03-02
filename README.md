@@ -1,13 +1,13 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/vinzify/PhrasePoP/main/banner.png" width="800" />
+  <img src="banner.png" width="800" />
   <h1>phrasePop</h1>
   <p><strong>A blazing fast, OS-wide AI text assistant spanning every application you use.</strong></p>
   
   <p>
-    <a href="https://github.com/vinzify/phrasePop/releases"><img src="https://img.shields.io/github/v/release/vinzify/phrasePop?style=flat-square&color=blue" alt="Current Release"></a>
+    <a href="https://github.com/vinzify/PhrasePoP/releases"><img src="https://img.shields.io/github/v/release/vinzify/PhrasePoP?style=flat-square&color=blue" alt="Current Release"></a>
     <a href="https://tauri.app/"><img src="https://img.shields.io/badge/Built_with-Tauri_%7C_Rust-orange?style=flat-square" alt="Built with Tauri & Rust"></a>
-    <a href="https://github.com/vinzify/phrasePop/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
-    <a href="https://github.com/vinzify/phrasePop/stargazers"><img src="https://img.shields.io/github/stars/vinzify/phrasePop?style=social" alt="GitHub stars"></a>
+    <a href="https://github.com/vinzify/PhrasePoP/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
+    <a href="https://github.com/vinzify/PhrasePoP/stargazers"><img src="https://img.shields.io/github/stars/vinzify/PhrasePoP?style=social" alt="GitHub stars"></a>
   </p>
 </div>
 
@@ -26,7 +26,7 @@ phrasePop is a background application that brings AI to *any* text field across 
 
 phrasePop runs silently in the background of your OS taking up practically zero system resources.
 
-1. **Download** the latest installer (`.msi` or `.exe`) from the [Releases page](https://github.com/vinzify/phrasePop/releases).
+1. **Download** the latest installer (`.msi` or `.exe`) from the [Releases page](https://github.com/vinzify/PhrasePoP/releases).
 2. **Launch** the downloaded installer.
    * *Note: If you see a blue "Windows protected your PC" screen, it's because phrasePop is new and unsigned. Click **More info** followed by **Run anyway**.*
 3. Launch `phrasePop` from your Start Menu.
@@ -54,7 +54,7 @@ Built with Tauri 2.0, React, TypeScript, and Rust.
 
 ```bash
 # Clone the repository
-git clone git@github.com:vinzify/phrasePop.git
+git clone git@github.com:vinzify/PhrasePoP.git
 cd phrasePop
 
 # Install dependencies
