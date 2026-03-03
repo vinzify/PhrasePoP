@@ -128,13 +128,15 @@ pub fn run() {
             .with_shortcuts(["ctrl+alt+c"])
             .expect("Failed to register shortcut")
             .with_handler(|app, shortcut, event| {
-                if event.state() == ShortcutState::Pressed {
+                if event.state() == ShortcutState::Released {
                     if let Some(window) = app.get_webview_window("main") {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                        
-                        tauri::async_runtime::spawn(async move {
+                        std::thread::spawn(move || {
+                            // Ensure Ctrl+C goes to the active window BEFORE we steal focus
                             let text = capture_text().unwrap_or_else(|_| "".to_string());
+                            
+                            // Now we safely show the phrasePop window with the captured text
+                            let _ = window.show();
+                            let _ = window.set_focus();
                             let _ = window.emit("open-phrase-pop", text);
                         });
                     }

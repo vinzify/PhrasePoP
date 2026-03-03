@@ -37,7 +37,14 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
             };
 
             if (saved) {
-                config = { ...config, ...JSON.parse(saved) };
+                const parsed = JSON.parse(saved);
+                config = { ...config, ...parsed };
+                // Fallbacks if older storage state left them strictly undefined/empty
+                if (!config.ollamaUrl) config.ollamaUrl = 'http://localhost:11434';
+                if (!config.model) config.model = 'llama3';
+                if (!config.provider || (config.provider !== 'OpenAI' && config.provider !== 'Ollama')) {
+                    config.provider = 'Ollama';
+                }
             }
 
             await generateAI(inputText, tone as GenerationMode, config, (chunk) => {
