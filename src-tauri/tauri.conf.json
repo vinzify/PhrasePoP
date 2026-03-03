@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "phrasePop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "identifier": "com.vinzify.phrasepop",
   "build": {
     "frontendDist": "../dist",
@@ -21,7 +21,8 @@
         "decorations": false,
         "alwaysOnTop": true,
         "visible": false,
-        "center": true
+        "center": true,
+        "shadow": false
       }
     ],
     "security": {
