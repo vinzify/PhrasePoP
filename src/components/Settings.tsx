@@ -82,12 +82,12 @@ export default function Settings({ onBack }: SettingsProps) {
                 <div className="settings-group fade-in-up">
                     <label>Default Rephrase Style</label>
                     <select value={defaultTone} onChange={e => setDefaultTone(e.target.value)}>
-                        <option value="Professional">Professional</option>
-                        <option value="Friendly">Friendly</option>
-                        <option value="Concise">Concise</option>
-                        <option value="Academic">Academic</option>
-                        <option value="Pirate">Pirate</option>
-                        <option value="SmartReply">💬 Smart Reply</option>
+                        <option value="Professional">💼 Professional & Clear</option>
+                        <option value="Friendly">😊 Warm & Friendly</option>
+                        <option value="Concise">✂️ Concise & Direct</option>
+                        <option value="Academic">🎓 Academic & Formal</option>
+                        <option value="Pirate">🏴‍☠️ Pirate (Fun)</option>
+                        <option value="SmartReply">💬 Smart Reply (Persona)</option>
                     </select>
                 </div>
 

@@ -130,11 +130,11 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
                         onChange={(e) => setTone(e.target.value)}
                         style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: '6px', padding: '6px 10px', outline: 'none' }}
                     >
-                        <option value="Professional">Professional</option>
-                        <option value="Friendly">Friendly</option>
-                        <option value="Concise">Concise</option>
-                        <option value="Academic">Academic</option>
-                        <option value="Pirate">Pirate</option>
+                        <option value="Professional">💼 Professional & Clear</option>
+                        <option value="Friendly">😊 Warm & Friendly</option>
+                        <option value="Concise">✂️ Concise & Direct</option>
+                        <option value="Academic">🎓 Academic & Formal</option>
+                        <option value="Pirate">🏴‍☠️ Pirate (Fun)</option>
                         <option value="SmartReply">💬 Smart Reply (Persona)</option>
                     </select>
                 </div>

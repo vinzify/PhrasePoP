@@ -10,6 +10,17 @@ export interface AIConfig {
 
 export type GenerationMode = 'Professional' | 'Friendly' | 'Concise' | 'Academic' | 'Pirate' | 'SmartReply';
 
+const getToneDescription = (mode: GenerationMode) => {
+    switch (mode) {
+        case 'Professional': return "clear, professional, polished, and corporate without sounding robotic";
+        case 'Friendly': return "warm, approachable, empathetic, and highly conversational";
+        case 'Concise': return "extremely brief, direct, and to the point, removing all unnecessary fluff";
+        case 'Academic': return "formal, precise, well-structured, using sophisticated vocabulary and an objective tone";
+        case 'Pirate': return "like a stereotypical pirate, using heavy nautical slang, 'arr's, and pirate vernacular";
+        default: return mode;
+    }
+};
+
 const buildPrompt = (text: string, mode: GenerationMode, persona: string) => {
     if (mode === 'SmartReply') {
         return `You are an AI assistant helping draft a direct reply on behalf of the user.
@@ -30,7 +41,9 @@ Incoming text:
 "${text}"`;
     }
 
-    return `You are an expert copywriter. Your task is to rephrase the provided text to perfectly match the "${mode}" tone.
+    const toneDescription = getToneDescription(mode);
+
+    return `You are an expert copywriter. Your task is to rephrase the provided text to be ${toneDescription}.
 
 CRITICAL RULES:
 1. OUTPUT ONLY THE REPHRASED TEXT. Absolutely no introductory text, no explanations, no conversational filler (e.g. do not say "Here is the rephrased version:" or "Certainly!").
