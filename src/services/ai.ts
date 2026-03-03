@@ -15,13 +15,13 @@ const buildPrompt = (text: string, mode: GenerationMode, persona: string) => {
         return `You are acting as the user with the following persona context:
 ${persona}
 
-Please draft a response to the following incoming message/email. Adopt the user's persona perfectly, and only output the final reply without any conversational filler or introductory text.
+Please draft a response to the following incoming message/email. Adopt the user's persona perfectly. Only output the final reply without any conversational filler or introductory text. DO NOT wrap your response in quotes.
 
 Message to reply to:
 "${text}"`;
     }
 
-    return `Please rephrase the following text to sound more ${mode}. Only output the final rephrased version without any conversational filler or quotation marks.
+    return `Please rephrase the following text to sound more ${mode}. Only output the final rephrased version without any conversational filler. DO NOT wrap your response in quotes.
 
 Text to rephrase:
 "${text}"`;
