@@ -1,4 +1,4 @@
-import { fetch } from '@tauri-apps/plugin-http';
+import { invoke } from '@tauri-apps/api/core';
 
 export interface AIConfig {
     provider: 'Ollama' | 'OpenAI';
@@ -36,27 +36,16 @@ export async function generateAI(
     const prompt = buildPrompt(text, mode, config.persona);
 
     if (config.provider === 'Ollama') {
-        const url = `${config.ollamaUrl}/api/generate`;
-
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: config.model || 'llama3',
-                    prompt: prompt,
-                    stream: false, // Tauri fetch doesn't support Web Streams API cleanly yet, using false for stability
-                })
+            const response = await invoke<string>('generate_ollama', {
+                ollamaUrl: config.ollamaUrl,
+                model: config.model || 'llama3',
+                prompt: prompt
             });
-
-            if (!response.ok) throw new Error(`Ollama Error: ${response.status} ${response.statusText}`);
-
-            const data = await response.json();
-            if (data.response) {
-                onChunk(data.response);
-            }
+            onChunk(response);
         } catch (e: any) {
-            throw new Error(`Failed to reach Ollama: ${e.message}`);
+            const errorMsg = typeof e === 'string' ? e : (e?.message || JSON.stringify(e));
+            throw new Error(errorMsg);
         }
     } else {
         // OpenAI Integration

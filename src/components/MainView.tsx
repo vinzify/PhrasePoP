@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Copy, Loader2, CheckCircle2, MessageSquareText } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { generateAI, type GenerationMode } from '../services/ai';
 
 interface MainViewProps {
@@ -71,10 +72,10 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
 
     return (
         <>
-            <div className="header" data-tauri-drag-region>
-                <div className="title-area" data-tauri-drag-region>
-                    <h1 data-tauri-drag-region>phrasePop</h1>
-                    <p data-tauri-drag-region>Highlight text anywhere, press Ctrl+Alt+C</p>
+            <div className="header" onMouseDown={() => getCurrentWindow().startDragging()}>
+                <div className="title-area">
+                    <h1>phrasePop</h1>
+                    <p>Highlight text anywhere, press Ctrl+Alt+C</p>
                 </div>
                 <button className="icon-btn" onClick={onOpenSettings} title="Settings">
                     <SettingsIcon size={20} color="rgba(255,255,255,0.7)" />

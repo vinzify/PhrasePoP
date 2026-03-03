@@ -77,6 +77,44 @@ async fn get_ollama_models(ollama_url: String) -> Result<Vec<String>, String> {
     Ok(models)
 }
 
+#[derive(serde::Serialize)]
+struct OllamaGenerateRequest {
+    model: String,
+    prompt: String,
+    stream: bool,
+}
+
+#[derive(serde::Deserialize)]
+struct OllamaGenerateResponse {
+    response: String,
+}
+
+#[tauri::command]
+async fn generate_ollama(ollama_url: String, model: String, prompt: String) -> Result<String, String> {
+    let url = format!("{}/api/generate", ollama_url.trim_end_matches('/'));
+    
+    let client = reqwest::Client::new();
+    let res = client.post(&url)
+        .json(&OllamaGenerateRequest {
+            model,
+            prompt,
+            stream: false,
+        })
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
+        
+    if !res.status().is_success() {
+        return Err(format!("Ollama returned error: {}", res.status()));
+    }
+    
+    let json: OllamaGenerateResponse = res.json()
+        .await
+        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+        
+    Ok(json.response)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -92,15 +130,18 @@ pub fn run() {
             .with_handler(|app, shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
                     if let Some(window) = app.get_webview_window("main") {
+                        // Crucial fix: Capture text from the currently focused window BEFORE phrasePop steals focus
+                        let text = capture_text().unwrap_or_else(|_| "".to_string());
+                        
                         let _ = window.show();
                         let _ = window.set_focus();
-                        let _ = app.emit("open-phrase-pop", ());
+                        let _ = window.emit("open-phrase-pop", text);
                     }
                 }
             })
             .build(),
     )
-    .invoke_handler(tauri::generate_handler![capture_text, set_clipboard, hide_window, get_ollama_models])
+    .invoke_handler(tauri::generate_handler![capture_text, set_clipboard, hide_window, get_ollama_models, generate_ollama])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

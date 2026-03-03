@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 interface SettingsProps {
     onBack: () => void;
@@ -54,14 +55,14 @@ export default function Settings({ onBack }: SettingsProps) {
 
     return (
         <>
-            <div className="header" data-tauri-drag-region>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} data-tauri-drag-region>
+            <div className="header" onMouseDown={() => getCurrentWindow().startDragging()}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button className="icon-btn" onClick={onBack}>
                         <ArrowLeft size={20} color="rgba(255,255,255,0.7)" />
                     </button>
-                    <div className="title-area" data-tauri-drag-region>
-                        <h1 data-tauri-drag-region>Settings</h1>
-                        <p data-tauri-drag-region>Configure AI Providers and Personal Context</p>
+                    <div className="title-area">
+                        <h1>Settings</h1>
+                        <p>Configure AI Providers and Personal Context</p>
                     </div>
                 </div>
             </div>
