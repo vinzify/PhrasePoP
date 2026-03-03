@@ -71,10 +71,10 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
 
     return (
         <>
-            <div className="header">
-                <div className="title-area">
-                    <h1>phrasePop</h1>
-                    <p>Highlight text anywhere, press Ctrl+Alt+C</p>
+            <div className="header" data-tauri-drag-region>
+                <div className="title-area" data-tauri-drag-region>
+                    <h1 data-tauri-drag-region>phrasePop</h1>
+                    <p data-tauri-drag-region>Highlight text anywhere, press Ctrl+Alt+C</p>
                 </div>
                 <button className="icon-btn" onClick={onOpenSettings} title="Settings">
                     <SettingsIcon size={20} color="rgba(255,255,255,0.7)" />

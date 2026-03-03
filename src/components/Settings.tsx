@@ -11,6 +11,7 @@ export default function Settings({ onBack }: SettingsProps) {
     const [model, setModel] = useState('llama3');
     const [openAiKey, setOpenAiKey] = useState('');
     const [persona, setPersona] = useState('Name: User\\nRole: Professional\\nStyle: Direct, concise, polite.');
+    const [ollamaModels, setOllamaModels] = useState<string[]>([]);
 
     useEffect(() => {
         // Load settings from local storage
@@ -25,6 +26,21 @@ export default function Settings({ onBack }: SettingsProps) {
         }
     }, []);
 
+    useEffect(() => {
+        if (provider === 'Ollama' && ollamaUrl) {
+            import('@tauri-apps/api/core').then(({ invoke }) => {
+                invoke<string[]>('get_ollama_models', { ollamaUrl })
+                    .then(models => {
+                        setOllamaModels(models);
+                        if (models.length > 0 && !models.includes(model)) {
+                            setModel(models[0]);
+                        }
+                    })
+                    .catch(err => console.error('Failed to get ollama models', err));
+            });
+        }
+    }, [provider, ollamaUrl]);
+
     const handleSave = () => {
         localStorage.setItem('phrasepop-settings', JSON.stringify({
             provider,
@@ -38,14 +54,14 @@ export default function Settings({ onBack }: SettingsProps) {
 
     return (
         <>
-            <div className="header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="header" data-tauri-drag-region>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} data-tauri-drag-region>
                     <button className="icon-btn" onClick={onBack}>
                         <ArrowLeft size={20} color="rgba(255,255,255,0.7)" />
                     </button>
-                    <div className="title-area">
-                        <h1>Settings</h1>
-                        <p>Configure AI Providers and Personal Context</p>
+                    <div className="title-area" data-tauri-drag-region>
+                        <h1 data-tauri-drag-region>Settings</h1>
+                        <p data-tauri-drag-region>Configure AI Providers and Personal Context</p>
                     </div>
                 </div>
             </div>
@@ -67,7 +83,15 @@ export default function Settings({ onBack }: SettingsProps) {
                         </div>
                         <div className="settings-group fade-in-up">
                             <label>Ollama Model Name</label>
-                            <input value={model} onChange={e => setModel(e.target.value)} />
+                            {ollamaModels.length > 0 ? (
+                                <select value={model} onChange={e => setModel(e.target.value)}>
+                                    {ollamaModels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input value={model} onChange={e => setModel(e.target.value)} placeholder="llama3" />
+                            )}
                         </div>
                     </>
                 ) : (

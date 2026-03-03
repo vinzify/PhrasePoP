@@ -36,6 +36,38 @@ fn hide_window(app: AppHandle) {
     }
 }
 
+#[derive(serde::Deserialize)]
+struct OllamaTagsResponse {
+    models: Vec<OllamaModel>,
+}
+
+#[derive(serde::Deserialize)]
+struct OllamaModel {
+    name: String,
+}
+
+#[tauri::command]
+async fn get_ollama_models(ollama_url: String) -> Result<Vec<String>, String> {
+    let url = format!("{}/api/tags", ollama_url.trim_end_matches('/'));
+    
+    let client = reqwest::Client::new();
+    let res = client.get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
+        
+    if !res.status().is_success() {
+        return Err(format!("Ollama returned error: {}", res.status()));
+    }
+    
+    let json: OllamaTagsResponse = res.json()
+        .await
+        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+        
+    let models = json.models.into_iter().map(|m| m.name).collect();
+    Ok(models)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -58,7 +90,7 @@ pub fn run() {
             })
             .build(),
     )
-    .invoke_handler(tauri::generate_handler![capture_text, set_clipboard, hide_window])
+    .invoke_handler(tauri::generate_handler![capture_text, set_clipboard, hide_window, get_ollama_models])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
