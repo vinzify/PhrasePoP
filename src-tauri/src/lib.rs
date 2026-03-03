@@ -10,6 +10,15 @@ use tauri_plugin_global_shortcut::ShortcutState;
 #[tauri::command]
 fn capture_text() -> Result<String, String> {
     let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    
+    // Explicitly release the shortcut triggers so they don't break the global copy command
+    let _ = enigo.key(Key::Alt, Direction::Release);
+    let _ = enigo.key(Key::Control, Direction::Release);
+    let _ = enigo.key(Key::Shift, Direction::Release);
+
+    // Give it a tiny moment to un-register physically held keys
+    thread::sleep(Duration::from_millis(50));
+
     let _ = enigo.key(Key::Control, Direction::Press);
     let _ = enigo.key(Key::Unicode('c'), Direction::Click);
     let _ = enigo.key(Key::Control, Direction::Release);
@@ -71,6 +80,7 @@ async fn get_ollama_models(ollama_url: String) -> Result<Vec<String>, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
         let _ = app.get_webview_window("main").expect("no main window").show();
         let _ = app.get_webview_window("main").expect("no main window").set_focus();

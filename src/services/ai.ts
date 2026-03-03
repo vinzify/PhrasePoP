@@ -1,3 +1,5 @@
+import { fetch } from '@tauri-apps/plugin-http';
+
 export interface AIConfig {
     provider: 'Ollama' | 'OpenAI';
     ollamaUrl: string;
@@ -35,31 +37,26 @@ export async function generateAI(
 
     if (config.provider === 'Ollama') {
         const url = `${config.ollamaUrl}/api/generate`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: config.model || 'llama3',
-                prompt: prompt,
-                stream: true,
-            })
-        });
 
-        if (!response.ok) throw new Error(`Ollama Error: ${response.statusText}`);
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: config.model || 'llama3',
+                    prompt: prompt,
+                    stream: false, // Tauri fetch doesn't support Web Streams API cleanly yet, using false for stability
+                })
+            });
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No reader stream");
+            if (!response.ok) throw new Error(`Ollama Error: ${response.status} ${response.statusText}`);
 
-        const decoder = new TextDecoder("utf-8");
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\\n').filter(l => l.trim());
-            for (const line of lines) {
-                const data = JSON.parse(line);
-                if (data.response) onChunk(data.response);
+            const data = await response.json();
+            if (data.response) {
+                onChunk(data.response);
             }
+        } catch (e: any) {
+            throw new Error(`Failed to reach Ollama: ${e.message}`);
         }
     } else {
         // OpenAI Integration
