@@ -8,7 +8,7 @@ export interface AIConfig {
     persona: string;
 }
 
-export type GenerationMode = 'Professional' | 'Friendly' | 'Concise' | 'Academic' | 'Pirate' | 'SmartReply';
+export type GenerationMode = 'Professional' | 'Friendly' | 'Concise' | 'Academic' | 'Pirate' | 'GenZ' | 'Sarcastic' | 'Persuasive' | 'Shakespeare' | 'Yoda' | 'SmartReply';
 
 const getToneDescription = (mode: GenerationMode) => {
     switch (mode) {
@@ -17,6 +17,11 @@ const getToneDescription = (mode: GenerationMode) => {
         case 'Concise': return "extremely brief, direct, and to the point, removing all unnecessary fluff";
         case 'Academic': return "formal, precise, well-structured, using sophisticated vocabulary and an objective tone";
         case 'Pirate': return "like a stereotypical pirate, using heavy nautical slang, 'arr's, and pirate vernacular";
+        case 'GenZ': return "highly fluent in internet slang, using Gen Z terminology natively without sounding forced (e.g. 'no cap', 'bet', 'vibes', 'fr')";
+        case 'Sarcastic': return "incredibly dry, cynical, and sarcastic, as if you are exhausted by the universe";
+        case 'Persuasive': return "highly convincing, structured, and sales-oriented, designed to make the reader agree with you";
+        case 'Shakespeare': return "written like an authentic William Shakespeare play, using Early Modern English and poetic meter where appropriate";
+        case 'Yoda': return "like Yoda from Star Wars, speaking in Object-Subject-Verb (OSV) word order and using Jedi-like wisdom";
         default: return mode;
     }
 };

@@ -133,8 +133,13 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
                         <option value="Professional">💼 Professional & Clear</option>
                         <option value="Friendly">😊 Warm & Friendly</option>
                         <option value="Concise">✂️ Concise & Direct</option>
+                        <option value="Persuasive">🤝 Sales & Persuasive</option>
                         <option value="Academic">🎓 Academic & Formal</option>
+                        <option value="GenZ">📱 Gen Z Intern</option>
+                        <option value="Sarcastic">😒 Dry & Sarcastic</option>
                         <option value="Pirate">🏴‍☠️ Pirate (Fun)</option>
+                        <option value="Shakespeare">🎭 Shakespeare</option>
+                        <option value="Yoda">👽 Master Yoda</option>
                         <option value="SmartReply">💬 Smart Reply (Persona)</option>
                     </select>
                 </div>
