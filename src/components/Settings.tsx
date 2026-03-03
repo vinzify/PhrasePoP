@@ -12,6 +12,7 @@ export default function Settings({ onBack }: SettingsProps) {
     const [model, setModel] = useState('llama3');
     const [openAiKey, setOpenAiKey] = useState('');
     const [persona, setPersona] = useState('Name: User\\nRole: Professional\\nStyle: Direct, concise, polite.');
+    const [defaultTone, setDefaultTone] = useState('Professional');
     const [ollamaModels, setOllamaModels] = useState<string[]>([]);
 
     useEffect(() => {
@@ -24,6 +25,7 @@ export default function Settings({ onBack }: SettingsProps) {
             setModel(parsed.model || 'llama3');
             setOpenAiKey(parsed.openAiKey || '');
             setPersona(parsed.persona || 'Name: User\\nRole: Professional\\nStyle: Direct, concise, polite.');
+            setDefaultTone(parsed.defaultTone || 'Professional');
         }
     }, []);
 
@@ -48,7 +50,8 @@ export default function Settings({ onBack }: SettingsProps) {
             ollamaUrl,
             model,
             openAiKey,
-            persona
+            persona,
+            defaultTone
         }));
         onBack();
     };
@@ -73,6 +76,18 @@ export default function Settings({ onBack }: SettingsProps) {
                     <select value={provider} onChange={e => setProvider(e.target.value)}>
                         <option value="Ollama">Ollama (Local/Privacy)</option>
                         <option value="OpenAI">OpenAI</option>
+                    </select>
+                </div>
+
+                <div className="settings-group fade-in-up">
+                    <label>Default Rephrase Style</label>
+                    <select value={defaultTone} onChange={e => setDefaultTone(e.target.value)}>
+                        <option value="Professional">Professional</option>
+                        <option value="Friendly">Friendly</option>
+                        <option value="Concise">Concise</option>
+                        <option value="Academic">Academic</option>
+                        <option value="Pirate">Pirate</option>
+                        <option value="SmartReply">💬 Smart Reply</option>
                     </select>
                 </div>
 

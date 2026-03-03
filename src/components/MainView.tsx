@@ -17,6 +17,20 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
+        const saved = localStorage.getItem('phrasepop-settings');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.defaultTone) {
+                    setTone(parsed.defaultTone);
+                }
+            } catch (e) {
+                // Ignore parse errors
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         setInputText(initialText || '');
         setOutputText(''); // Reset output when new text arrives
     }, [initialText]);
