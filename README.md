@@ -1,6 +1,6 @@
 <div align="center">
   <img src="banner.png" width="800" />
-  <h1>phrasePop</h1>
+  <h1>PhrasePoP</h1>
   <p><strong>A blazing fast, OS-wide AI text assistant spanning every application you use.</strong></p>
   
   <p>

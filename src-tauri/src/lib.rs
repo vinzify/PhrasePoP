@@ -3,7 +3,9 @@ use enigo::{Enigo, Key, Keyboard, Settings, Direction};
 use std::thread;
 use std::time::Duration;
 use tauri::{AppHandle, Manager, Emitter};
-use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri_plugin_global_shortcut::ShortcutState;
 
 #[tauri::command]
 fn capture_text() -> Result<String, String> {
@@ -62,6 +64,51 @@ pub fn run() {
         )?;
       }
       
+      let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+      let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+      let open_i = MenuItem::with_id(app, "open", "Open PhrasePop", true, None::<&str>)?;
+      let menu = Menu::with_items(app, &[&open_i, &settings_i, &quit_i])?;
+
+      let _tray = TrayIconBuilder::new()
+          .menu(&menu)
+          .show_menu_on_left_click(true)
+          .icon(app.default_window_icon().cloned().expect("Failed to get default icon"))
+          .on_menu_event(|app, event| match event.id.as_ref() {
+              "quit" => {
+                  app.exit(0);
+              }
+              "open" => {
+                  if let Some(window) = app.get_webview_window("main") {
+                      let _ = window.show();
+                      let _ = window.set_focus();
+                  }
+              }
+              "settings" => {
+                  if let Some(window) = app.get_webview_window("main") {
+                      let _ = window.show();
+                      let _ = window.set_focus();
+                      // Emit event to frontend to open settings
+                      let _ = app.emit("open-settings", ());
+                  }
+              }
+              _ => {}
+          })
+          .on_tray_icon_event(|tray, event| match event {
+              TrayIconEvent::Click {
+                  button: MouseButton::Left,
+                  button_state: MouseButtonState::Up,
+                  ..
+              } => {
+                  let app = tray.app_handle();
+                  if let Some(window) = app.get_webview_window("main") {
+                      let _ = window.show();
+                      let _ = window.set_focus();
+                  }
+              }
+              _ => {}
+          })
+          .build(app)?;
+
       if let Some(window) = app.get_webview_window("main") {
           let window_clone = window.clone();
           window.on_window_event(move |event| {
@@ -71,6 +118,10 @@ pub fn run() {
                   }
               }
           });
+          
+          // Fix 1: Show the window explicitly on initial launch
+          let _ = window.show();
+          let _ = window.set_focus();
       }
       Ok(())
     })
