@@ -12,10 +12,8 @@ function App() {
     // Listen for the global shortcut trigger
     const unlisten = listen<string>('open-phrase-pop', (event) => {
       const text = event.payload;
-      if (text) {
-        setCapturedText(text);
-        setShowSettings(false); // Make sure main view is showing
-      }
+      setCapturedText(text || '');
+      setShowSettings(false); // Make sure main view is showing
     });
 
     return () => {

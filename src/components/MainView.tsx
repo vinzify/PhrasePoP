@@ -17,10 +17,8 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (initialText) {
-            setInputText(initialText);
-            setOutputText(''); // Reset output when new text arrives
-        }
+        setInputText(initialText || '');
+        setOutputText(''); // Reset output when new text arrives
     }, [initialText]);
 
     const handleGenerate = async () => {

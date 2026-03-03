@@ -130,12 +130,13 @@ pub fn run() {
             .with_handler(|app, shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
                     if let Some(window) = app.get_webview_window("main") {
-                        // Crucial fix: Capture text from the currently focused window BEFORE phrasePop steals focus
-                        let text = capture_text().unwrap_or_else(|_| "".to_string());
-                        
                         let _ = window.show();
                         let _ = window.set_focus();
-                        let _ = window.emit("open-phrase-pop", text);
+                        
+                        tauri::async_runtime::spawn(async move {
+                            let text = capture_text().unwrap_or_else(|_| "".to_string());
+                            let _ = window.emit("open-phrase-pop", text);
+                        });
                     }
                 }
             })
