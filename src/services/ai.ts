@@ -12,16 +12,31 @@ export type GenerationMode = 'Professional' | 'Friendly' | 'Concise' | 'Academic
 
 const buildPrompt = (text: string, mode: GenerationMode, persona: string) => {
     if (mode === 'SmartReply') {
-        return `You are acting as the user with the following persona context:
+        return `You are an AI assistant helping draft a direct reply on behalf of the user.
+Here is the user's personal context and persona:
+<persona>
 ${persona}
+</persona>
 
-Please draft a response to the following incoming message/email. Adopt the user's persona perfectly. Only output the final reply without any conversational filler or introductory text. DO NOT wrap your response in quotes.
+Draft a natural response to the following incoming text. 
 
-Message to reply to:
+CRITICAL RULES:
+1. Adopt the user's persona perfectly.
+2. OUTPUT ONLY THE DIRECT REPLY. Absolutely no introductory text, no explanations, no conversational filler (e.g. do not say "Here is a reply:" or "Sure!").
+3. DO NOT wrap your response in quotes.
+4. Keep it relevant and to the point.
+
+Incoming text:
 "${text}"`;
     }
 
-    return `Please rephrase the following text to sound more ${mode}. Only output the final rephrased version without any conversational filler. DO NOT wrap your response in quotes.
+    return `You are an expert copywriter. Your task is to rephrase the provided text to perfectly match the "${mode}" tone.
+
+CRITICAL RULES:
+1. OUTPUT ONLY THE REPHRASED TEXT. Absolutely no introductory text, no explanations, no conversational filler (e.g. do not say "Here is the rephrased version:" or "Certainly!").
+2. DO NOT wrap your response in quotes.
+3. Preserve the original meaning and core information exactly.
+4. Do not use markdown or formatting unless the original text used it.
 
 Text to rephrase:
 "${text}"`;
