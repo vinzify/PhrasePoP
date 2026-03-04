@@ -14,15 +14,15 @@
 phrasePop is a background application that brings AI to *any* text field across your entire OS. Highlight text in an email, browser, or Word doc, press `Ctrl+Alt+C`, and phrasePop summons a gorgeous, native glassmorphism window to intelligently rephrase or perfectly reply to the context.
 
 ## ✨ Features
-* **Global Hotkey & Fast Architecture:** Summons effortlessly via `Ctrl+Alt+C` over any application on Windows, MacOS, and Linux. No API integrations needed.
+* **Global Hotkey:** Summons effortlessly via `Ctrl+Alt+C` over any text field on Windows, MacOS, and Linux. No API integrations needed.
 * **Instant OS Auto-Copy:** The second a payload finishes generating, phrasePop secretly injects it directly into your OS clipboard so you can `Ctrl+V` immediately without a single extra click.
-* **In-App Auto-Updater:** Never redownload an installer. Pull the latest phrasePop features seamlessly from the Settings panel.
 * **Smart Rephraser:** Instantly rewrite text into custom tones (*Professional, Friendly, Concise, Pirate, Academic*).
 * **Smart Replier (Persona Engine):** Draft perfectly tailored replies to incoming messages just by highlighting them. Configure your personalized "Persona" so the AI responds precisely as you would.
-* **Instant Native UI:** Built with Tauri + Rust + React. Native performance, tiny memory footprint, opens instantly and hides on blur just like a spotlight search.
-* **Privacy First (Local AI):** Connects gracefully to [Ollama](https://ollama.com/) (defaults to `llama3`) so your proprietary reading doesn't leave your machine.
-* **Cloud Providers:** Native support for OpenAI's cutting edge APIs via API Key support.
-* **Premium Aesthetics:** Dark mode, translucent glassmorphism UI overlaying your screen.
+* **Instant Native UI & Premium Aesthetics:** Built with Tauri + Rust + React. Native performance, tiny memory footprint, opens instantly and hides on blur just like a spotlight search. Dark mode glassmorphism overlay masking over your OS elements.
+* **Bring Your Own AI:**
+  * *Local & Private:* Connects gracefully to [Ollama](https://ollama.com/) (defaults to `llama3`) so your private reading doesn't leave your machine.
+  * *Cloud Providers:* Native support for OpenAI's cutting edge APIs via API Key support.
+* **In-App Auto-Updater:** Never redownload an installer. Pull the latest phrasePop features seamlessly from the Settings panel.
 
 ## 🚀 Installation
 
@@ -36,19 +36,23 @@ phrasePop runs silently in the background of your OS taking up practically zero 
 
 ## 🤖 AI Engine Configuration
 
-phrasePop features robust background text generation capabilities. You can configure it entirely from the Settings.
+PhrasePoP features robust background text generation capabilities. You can configure it entirely from the Settings (⚙️ icon).
 
-### ⚙️ Option 1: Local Ollama (Default & Most Secure)
+### ⚙️ Configuring Your AI Provider
+Click the **Settings** (gear) icon in the PhrasePoP application to choose your AI engine.
+
+#### Option 1: Local Ollama (Default & Most Secure)
 If you want to ensure your private emails never leave your device:
 1. Download [Ollama](https://ollama.com/).
-2. Run `ollama pull llama3` in your terminal.
+2. Run `ollama pull llama3` (or your preferred text model) in your terminal.
 3. Keep Ollama running (`localhost:11434`), highlight some text, hit `Ctrl+Alt+C`, and click **Enhance**.
 
-### ☁️ Option 2: Cloud OpenAI integration
-phrasePop natively supports OpenAI connection for bleeding-edge intelligence.
+#### Option 2: Cloud OpenAI integration
+PhrasePoP natively supports OpenAI connections for bleeding-edge intelligence.
 1. Enter the settings view via the ⚙️ icon in phrasePop.
 2. Select **OpenAI**.
-3. Provide your API Key safely locally.
+3. Provide your API Key securely.
+*(Your keys are stored entirely locally on your machine).*
 
 ## 🛠️ Development
 
