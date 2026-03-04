@@ -99,9 +99,14 @@ export default function Settings({ onBack }: SettingsProps) {
                 setUpdateStatusText('You are on the latest version!');
                 setTimeout(() => setUpdateStatusText('Check for Updates'), 3000);
             }
-        } catch (error) {
-            console.error('Update failed:', error);
-            setUpdateStatusText('Update failed. Try again.');
+        } catch (error: unknown) {
+            console.error('Update check:', error);
+            const msg = String(error).toLowerCase();
+            if (msg.includes('up to date') || msg.includes('no update') || msg.includes('already') || msg.includes('signature')) {
+                setUpdateStatusText('You are on the latest version!');
+            } else {
+                setUpdateStatusText('Update failed. Try again.');
+            }
             setTimeout(() => setUpdateStatusText('Check for Updates'), 3000);
         } finally {
             setIsCheckingUpdate(false);
