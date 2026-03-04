@@ -1,11 +1,11 @@
 {
-    "version": "1.1.12",
+    "version": "1.1.13",
     "notes": "Added Auto-Copy capability and integrated the Tauri v2 Auto-Updater so you can upgrade from within the UI.",
     "pub_date": "2026-03-04T00:00:00Z",
     "platforms": {
         "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUM0pBSVpaeEhpNk5vTm5PSU12SGZZQUtkMzQ2OTROV3FjOFNJdVN3b2Y1L3ByekpoYzRjdjA2K2lHenA4RHoyL09LcDdQWkk1WnFHL1JpN1pvQ0NhVCs4SVk3NEhsd2dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNTg4ODQ5CWZpbGU6cGhyYXNlUG9wXzEuMS4xMl94NjQtc2V0dXAuZXhlCnlQOXZjaEcrckkybXBWRkxPRzVSbzhUQk13SVA4L3pzMGEvVDVXN2xQR3NmUGh2Y2xFWHdUMUFtUmt5N3FSMmNuWGJmU3hMUzN2aFZMVmxMYWJSekRBPT0K",
-            "url": "https://github.com/vinzify/PhrasePoP/releases/download/v1.1.12/phrasePop_1.1.12_x64-setup.exe"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTeXhFMU5sSmkxd0R5andFVDNITk91TUloL3NQVlEvTEcvUTkvdVNtZnk4SHd0czdYWWFqRkQzWCsxS0x4ZUhSTCtJenllSENTSElZa005MnRwRFo4N1RHajUwZDJFdGc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNTkyMzEyCWZpbGU6cGhyYXNlUG9wXzEuMS4xM194NjQtc2V0dXAuZXhlCm5TVzQzRCtKanVqVHBKOTRycERYM002UmFaMkZYOTl3Si9iSkNQMnJYT21LRjZQUFhlZ2Nzb3E1Nk5uWGRpUWFIOVdva3gyWjZiZkJNMHp4b28vSkN3PT0K",
+            "url": "https://github.com/vinzify/PhrasePoP/releases/download/v1.1.13/phrasePop_1.1.13_x64-setup.exe"
         }
     }
 }
