@@ -7,6 +7,9 @@
   ],
   "permissions": [
     "core:default",
-    "http:default"
+    "http:default",
+    "process:default",
+    "process:allow-restart",
+    "updater:default"
   ]
 }
