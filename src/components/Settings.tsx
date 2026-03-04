@@ -123,9 +123,9 @@ export default function Settings({ onBack }: SettingsProps) {
             </div>
 
             <div className="settings-grid" style={{ overflowY: 'auto', maxHeight: '400px', paddingRight: '8px' }}>
-                <div className="settings-group fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px' }}>
+                <div className="settings-group fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <DownloadCloud size={18} color="rgba(255,255,255,0.6)" />
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>↓</span>
                         <div>
                             <label style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>Software Update</label>
                             <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Check for the latest version</p>
@@ -136,7 +136,7 @@ export default function Settings({ onBack }: SettingsProps) {
                         onClick={handleCheckUpdate}
                         disabled={isCheckingUpdate}
                     >
-                        {isCheckingUpdate ? <Loader2 size={12} className="spinning" /> : null}
+                        {isCheckingUpdate ? <span className="spinning" style={{ display: 'inline-block' }}>↻</span> : null}
                         <span style={{ fontWeight: 500 }}>{updateStatusText}</span>
                     </button>
                 </div>
@@ -174,15 +174,25 @@ export default function Settings({ onBack }: SettingsProps) {
                         </div>
                         <div className="settings-group fade-in-up">
                             <label>Ollama Model Name</label>
-                            {ollamaModels.length > 0 ? (
-                                <select value={model} onChange={e => setModel(e.target.value)}>
-                                    {ollamaModels.map(m => (
+                            <select value={model} onChange={e => setModel(e.target.value)}>
+                                {model && !["llama3.2", "llama3.1", "llama3", "mistral", "qwen2.5-coder", "deepseek-coder"].includes(model) && (
+                                    <option value={model}>{model} (Custom)</option>
+                                )}
+                                {ollamaModels.length > 0 ? (
+                                    ollamaModels.map(m => (
                                         <option key={m} value={m}>{m}</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input value={model} onChange={e => setModel(e.target.value)} placeholder="llama3" />
-                            )}
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="llama3.2">llama3.2</option>
+                                        <option value="llama3.1">llama3.1</option>
+                                        <option value="llama3">llama3</option>
+                                        <option value="mistral">mistral</option>
+                                        <option value="qwen2.5-coder">qwen2.5-coder</option>
+                                        <option value="deepseek-coder">deepseek-coder</option>
+                                    </>
+                                )}
+                            </select>
                         </div>
                     </>
                 ) : (
