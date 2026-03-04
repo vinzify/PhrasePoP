@@ -14,7 +14,9 @@
 phrasePop is a background application that brings AI to *any* text field across your entire OS. Highlight text in an email, browser, or Word doc, press `Ctrl+Alt+C`, and phrasePop summons a gorgeous, native glassmorphism window to intelligently rephrase or perfectly reply to the context.
 
 ## ✨ Features
-* **Global Hotkey & Clipboard Architecture:** Summons effortlessly via `Ctrl+Alt+C` over any application on Windows, MacOS, and Linux. No API integrations needed.
+* **Global Hotkey & Fast Architecture:** Summons effortlessly via `Ctrl+Alt+C` over any application on Windows, MacOS, and Linux. No API integrations needed.
+* **Instant OS Auto-Copy:** The second a payload finishes generating, phrasePop secretly injects it directly into your OS clipboard so you can `Ctrl+V` immediately without a single extra click.
+* **In-App Auto-Updater:** Never redownload an installer. Pull the latest phrasePop features seamlessly from the Settings panel.
 * **Smart Rephraser:** Instantly rewrite text into custom tones (*Professional, Friendly, Concise, Pirate, Academic*).
 * **Smart Replier (Persona Engine):** Draft perfectly tailored replies to incoming messages just by highlighting them. Configure your personalized "Persona" so the AI responds precisely as you would.
 * **Instant Native UI:** Built with Tauri + Rust + React. Native performance, tiny memory footprint, opens instantly and hides on blur just like a spotlight search.
