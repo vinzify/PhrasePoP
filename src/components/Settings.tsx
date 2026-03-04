@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, DownloadCloud, Loader2 } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
+
 
 interface SettingsProps {
     onBack: () => void;
@@ -14,6 +17,10 @@ export default function Settings({ onBack }: SettingsProps) {
     const [persona, setPersona] = useState('Name: User\nRole: Professional\nStyle: Direct, concise, polite.');
     const [defaultTone, setDefaultTone] = useState('Professional');
     const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+
+    // Auto-Updater status tracking
+    const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+    const [updateStatusText, setUpdateStatusText] = useState('Check for Updates');
 
     useEffect(() => {
         // Load settings from local storage
@@ -56,6 +63,51 @@ export default function Settings({ onBack }: SettingsProps) {
         onBack();
     };
 
+    const handleCheckUpdate = async () => {
+        try {
+            setIsCheckingUpdate(true);
+            setUpdateStatusText('Checking server...');
+
+            const update = await check();
+            if (update) {
+                setUpdateStatusText(`Downloading v${update.version}...`);
+                let downloaded = 0;
+                let contentLength = 0;
+
+                await update.downloadAndInstall((event) => {
+                    switch (event.event) {
+                        case 'Started':
+                            contentLength = event.data.contentLength || 0;
+                            setUpdateStatusText(`Installing update...`);
+                            break;
+                        case 'Progress':
+                            downloaded += event.data.chunkLength;
+                            if (contentLength > 0) {
+                                const percent = Math.round((downloaded / contentLength) * 100);
+                                setUpdateStatusText(`Downloading... ${percent}%`);
+                            }
+                            break;
+                        case 'Finished':
+                            setUpdateStatusText('Finished. Relaunching...');
+                            break;
+                    }
+                });
+
+                setUpdateStatusText('Relaunching app...');
+                await relaunch();
+            } else {
+                setUpdateStatusText('You are on the latest version!');
+                setTimeout(() => setUpdateStatusText('Check for Updates'), 3000);
+            }
+        } catch (error) {
+            console.error('Update failed:', error);
+            setUpdateStatusText('Update failed. Try again.');
+            setTimeout(() => setUpdateStatusText('Check for Updates'), 3000);
+        } finally {
+            setIsCheckingUpdate(false);
+        }
+    };
+
     return (
         <>
             <div className="header" onMouseDown={() => getCurrentWindow().startDragging()}>
@@ -71,6 +123,22 @@ export default function Settings({ onBack }: SettingsProps) {
             </div>
 
             <div className="settings-grid" style={{ overflowY: 'auto', maxHeight: '400px', paddingRight: '8px' }}>
+                <div className="settings-group fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div>
+                        <label style={{ margin: 0, color: 'white' }}>Application Updates</label>
+                        <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Download and install the latest version</p>
+                    </div>
+                    <button
+                        className="secondary-btn"
+                        onClick={handleCheckUpdate}
+                        disabled={isCheckingUpdate}
+                        style={{ margin: 0 }}
+                    >
+                        {isCheckingUpdate ? <Loader2 size={16} className="spinning" /> : <DownloadCloud size={16} />}
+                        <span>{updateStatusText}</span>
+                    </button>
+                </div>
+
                 <div className="settings-group">
                     <label>AI Provider</label>
                     <select value={provider} onChange={e => setProvider(e.target.value)}>

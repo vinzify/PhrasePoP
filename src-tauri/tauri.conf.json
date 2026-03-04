@@ -1,13 +1,26 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "phrasePop",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "identifier": "com.vinzify.phrasepop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build"
+  },
+  "plugins": {
+    "global-shortcut": {
+      "aliases": [
+        "CmdOrControl+Alt+C"
+      ]
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU4RTIxMTY3MTkwMjI0RjcKUldUM0pBSVpaeEhpNk1VdTE2ZVV3MFRKN0U5QzdYa1lYR1UzaDY2ME9FdzJkc2ZqT0NTZjlxRW0K",
+      "endpoints": [
+        "https://github.com/vinzify/PhrasePoP/releases/latest/download/latest.json"
+      ]
+    }
   },
   "app": {
     "windows": [
@@ -31,6 +44,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",

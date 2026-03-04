@@ -61,9 +61,20 @@ export default function MainView({ onOpenSettings, initialText }: MainViewProps)
                 }
             }
 
+            // We track the complete text locally because React state updates are asynchronous
+            let finalText = '';
+
             await generateAI(inputText, tone as GenerationMode, config, (chunk) => {
+                finalText += chunk;
                 setOutputText(prev => prev + chunk);
             });
+
+            // Automatically copy to clipboard when generation completes successfully
+            if (finalText) {
+                await invoke('set_clipboard', { text: finalText });
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000); // UI Feedback reset
+            }
         } catch (err: any) {
             console.error(err);
             setOutputText(prev => prev + `\\n\\n[Error: ${err.message}]`);

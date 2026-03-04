@@ -129,6 +129,8 @@ async fn generate_ollama(ollama_url: String, model: String, prompt: String) -> R
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_http::init())
+    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_process::init())
     .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
         let _ = app.get_webview_window("main").expect("no main window").show();
         let _ = app.get_webview_window("main").expect("no main window").set_focus();
