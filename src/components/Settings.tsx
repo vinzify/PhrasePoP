@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
@@ -21,6 +22,11 @@ export default function Settings({ onBack }: SettingsProps) {
     // Auto-Updater status tracking
     const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
     const [updateStatusText, setUpdateStatusText] = useState('Check for Updates');
+    const [appVersion, setAppVersion] = useState('');
+
+    useEffect(() => {
+        getVersion().then(v => setAppVersion(v));
+    }, []);
 
     useEffect(() => {
         // Load settings from local storage
@@ -128,22 +134,27 @@ export default function Settings({ onBack }: SettingsProps) {
             </div>
 
             <div className="settings-grid" style={{ overflowY: 'auto', maxHeight: '400px', paddingRight: '8px' }}>
-                <div className="settings-group fade-in-up" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>↓</span>
-                        <div>
-                            <label style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>Software Update</label>
-                            <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Check for the latest version</p>
+                <div className="fade-in-up" style={{ margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>↓</span>
+                            <div>
+                                <label style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>Software Update</label>
+                                <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Current version: v{appVersion}</p>
+                            </div>
                         </div>
+                        <button
+                            style={{ margin: 0, padding: '6px 10px', fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            onClick={handleCheckUpdate}
+                            disabled={isCheckingUpdate}
+                        >
+                            {isCheckingUpdate ? <span className="spinning" style={{ display: 'inline-block' }}>↻</span> : null}
+                            <span style={{ fontWeight: 500 }}>{updateStatusText}</span>
+                        </button>
                     </div>
-                    <button
-                        style={{ margin: 0, padding: '6px 10px', fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        onClick={handleCheckUpdate}
-                        disabled={isCheckingUpdate}
-                    >
-                        {isCheckingUpdate ? <span className="spinning" style={{ display: 'inline-block' }}>↻</span> : null}
-                        <span style={{ fontWeight: 500 }}>{updateStatusText}</span>
-                    </button>
+                    <p style={{ margin: '6px 0 0 26px', fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
+                        Made by <a href="https://www.vcreative.it" target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>vcreative.it</a>
+                    </p>
                 </div>
 
                 <div className="settings-group">
