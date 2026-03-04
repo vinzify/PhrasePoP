@@ -128,7 +128,7 @@ export default function Settings({ onBack }: SettingsProps) {
             </div>
 
             <div className="settings-grid" style={{ overflowY: 'auto', maxHeight: '400px', paddingRight: '8px' }}>
-                <div className="settings-group fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
+                <div className="settings-group fade-in-up" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>↓</span>
                         <div>
