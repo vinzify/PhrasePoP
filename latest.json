@@ -1,11 +1,15 @@
 {
-    "version": "1.1.13",
-    "notes": "Added Auto-Copy capability and integrated the Tauri v2 Auto-Updater so you can upgrade from within the UI.",
-    "pub_date": "2026-03-04T00:00:00Z",
-    "platforms": {
-        "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTeXhFMU5sSmkxd0R5andFVDNITk91TUloL3NQVlEvTEcvUTkvdVNtZnk4SHd0czdYWWFqRkQzWCsxS0x4ZUhSTCtJenllSENTSElZa005MnRwRFo4N1RHajUwZDJFdGc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNTkyMzEyCWZpbGU6cGhyYXNlUG9wXzEuMS4xM194NjQtc2V0dXAuZXhlCm5TVzQzRCtKanVqVHBKOTRycERYM002UmFaMkZYOTl3Si9iSkNQMnJYT21LRjZQUFhlZ2Nzb3E1Nk5uWGRpUWFIOVdva3gyWjZiZkJNMHp4b28vSkN3PT0K",
-            "url": "https://github.com/vinzify/PhrasePoP/releases/download/v1.1.13/phrasePop_1.1.13_x64-setup.exe"
-        }
+  "version": "1.1.14",
+  "notes": "PhrasePop v1.1.14: Final UI polish for the Auto-Updater and fixes missing installer icons. A manual download is required to bridge the rotated cryptokeys.",
+  "pub_date": "2026-03-04T15:51:21.396Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRc0w3WDUvc3NsaGxhRVdLN1hMR0FHbEdrYmd2aG9jcGM5dXdEM1lobzNqc2dwRzVSbzZjTVdXcmRySlZLQ2dpRVM2ckw1eHRPUjZ5b0Eyb3NiQ1JYTERsRzYzcDh2V0FvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNjM5NDQ4CWZpbGU6cGhyYXNlUG9wXzEuMS4xNF94NjQtc2V0dXAuZXhlClE1U2M2WUFKczRzMzdZalB3VXdMQ2dhUTZ1N3BIZ2FZSmlOQTh2VXZDeUE2RXJuYjdjTVZLNnNaSCtVeCtHRXlEUmVYYlAvTkJPbktqRURaL1RWZkNnPT0K",
+      "url": "https://github.com/vinzify/PhrasePoP/releases/download/v1.1.14/phrasePop_1.1.14_x64-setup.exe"
+    },
+    "windows-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRc0w3WDUvc3NsaG5jdWNlQlF6SE1JTHdoMm1IWFdyMnhOaWxUSGFlbzVTc3FBZ0d1SEtHQ29qNEo5QTlUYlVHZXVrbWd0Q2Q2Vkp1Y2FScmhYZlBrWXlkR2c2anEwRWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNjM5NDQ4CWZpbGU6cGhyYXNlUG9wXzEuMS4xNF94NjRfZW4tVVMubXNpClNQS2MzeU5Vd1lGUnRqcmZNL2JjalJrN1Y5K0RWSXJuYjBEb05CQ2w1UkQ1dmRPd1hPb1o4eENQTW5VNjEyWE9xemtpZDBEZE1QQk5MbjJWUjJCNER3PT0K",
+      "url": "https://github.com/vinzify/PhrasePoP/releases/download/v1.1.14/phrasePop_1.1.14_x64_en-US.msi"
     }
+  }
 }
