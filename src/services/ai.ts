@@ -70,11 +70,15 @@ export async function generateAI(
 
     if (config.provider === 'Ollama') {
         try {
-            const response = await invoke<string>('generate_ollama', {
+            let response = await invoke<string>('generate_ollama', {
                 ollamaUrl: config.ollamaUrl,
                 model: config.model || 'llama3',
                 prompt: prompt
             });
+
+            // Strip leading / trailing quotes which aggressive models like Qwen 2.5 love to inject
+            response = response.trim().replace(/^["']|["']$/g, '');
+
             onChunk(response);
         } catch (e: any) {
             const errorMsg = typeof e === 'string' ? e : (e?.message || JSON.stringify(e));

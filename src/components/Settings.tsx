@@ -11,7 +11,7 @@ export default function Settings({ onBack }: SettingsProps) {
     const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
     const [model, setModel] = useState('llama3');
     const [openAiKey, setOpenAiKey] = useState('');
-    const [persona, setPersona] = useState('Name: User\\nRole: Professional\\nStyle: Direct, concise, polite.');
+    const [persona, setPersona] = useState('Name: User\nRole: Professional\nStyle: Direct, concise, polite.');
     const [defaultTone, setDefaultTone] = useState('Professional');
     const [ollamaModels, setOllamaModels] = useState<string[]>([]);
 
@@ -24,7 +24,7 @@ export default function Settings({ onBack }: SettingsProps) {
             setOllamaUrl(parsed.ollamaUrl || 'http://localhost:11434');
             setModel(parsed.model || 'llama3');
             setOpenAiKey(parsed.openAiKey || '');
-            setPersona(parsed.persona || 'Name: User\\nRole: Professional\\nStyle: Direct, concise, polite.');
+            setPersona(parsed.persona || 'Name: User\nRole: Professional\nStyle: Direct, concise, polite.');
             setDefaultTone(parsed.defaultTone || 'Professional');
         }
     }, []);

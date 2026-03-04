@@ -59,7 +59,11 @@ struct OllamaModel {
 async fn get_ollama_models(ollama_url: String) -> Result<Vec<String>, String> {
     let url = format!("{}/api/tags", ollama_url.trim_end_matches('/'));
     
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Failed to build client: {}", e))?;
+        
     let res = client.get(&url)
         .send()
         .await
@@ -93,7 +97,13 @@ struct OllamaGenerateResponse {
 async fn generate_ollama(ollama_url: String, model: String, prompt: String) -> Result<String, String> {
     let url = format!("{}/api/generate", ollama_url.trim_end_matches('/'));
     
-    let client = reqwest::Client::new();
+    // Large models (e.g. Qwen 3.5, Llama 3 70B) take significant time to load from disk to VRAM. 
+    // Expanding the timeout to 120 seconds prevents "Failed to reach Ollama" proxy errors during cold boots.
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(120))
+        .build()
+        .map_err(|e| format!("Failed to build client: {}", e))?;
+        
     let res = client.post(&url)
         .json(&OllamaGenerateRequest {
             model,
