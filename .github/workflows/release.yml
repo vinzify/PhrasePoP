@@ -1,0 +1,67 @@
+name: Release phrasePop
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Pre-download NSIS and WiX to prevent connection drops
+        run: |
+          $tauriDir = "$env:LOCALAPPDATA\tauri"
+          New-Item -ItemType Directory -Force -Path "$tauriDir\WIX"
+          New-Item -ItemType Directory -Force -Path "$tauriDir\NSIS"
+          function Download-WithRetry {
+            param($url, $outFile)
+            for ($i = 0; $i -lt 5; $i++) {
+              try {
+                Invoke-WebRequest -Uri $url -OutFile $outFile -ErrorAction Stop
+                Write-Host "Successfully downloaded $url"
+                return
+              } catch {
+                Write-Host "Failed to download $url : $_. Retrying..."
+                Start-Sleep -Seconds 5
+              }
+            }
+            throw "Failed to download after 5 attempts."
+          }
+          Download-WithRetry -url "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -outFile "$tauriDir\WIX\wix314-binaries.zip"
+          Download-WithRetry -url "https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.11/nsis-3.11.zip" -outFile "$tauriDir\NSIS\nsis-3.11.zip"
+
+      - name: Build and Publish Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: phrasePop v__VERSION__
+          releaseName: 'phrasePop v__VERSION__'
+          releaseBody: |
+            ## phrasePop
+
+            ### 🚀 Automatic Update
+            This release was automatically compiled and code-signed by GitHub Actions. The `latest.json` cryptographic signatures are included in this bundle so that the phrasePop in-app Auto-Updater can securely verify and install this payload over older versions!
+          releaseDraft: false
+          prerelease: false
