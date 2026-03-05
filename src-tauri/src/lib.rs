@@ -2,6 +2,9 @@ use arboard::Clipboard;
 use enigo::{Enigo, Key, Keyboard, Settings, Direction};
 use std::thread;
 use std::time::Duration;
+#[cfg(target_os = "macos")]
+use tauri_plugin_autostart::MacosLauncher;
+
 use tauri::{AppHandle, Manager, Emitter};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -260,6 +263,16 @@ pub fn run() {
         )?;
       }
       
+      let autostart_plugin = tauri_plugin_autostart::init(
+          tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+          Some(vec!["--minimized"])
+      );
+      app.handle().plugin(autostart_plugin).unwrap();
+
+      // Check if the app was launched with --minimized flag (e.g., from autostart)
+      let args: Vec<String> = std::env::args().collect();
+      let is_minimized = args.iter().any(|arg| arg == "--minimized");
+
       let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
       let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
       let open_i = MenuItem::with_id(app, "open", "Open PhrasePop", true, None::<&str>)?;
@@ -316,8 +329,10 @@ pub fn run() {
           });
           
           // Fix 1: Show the window explicitly on initial launch
-          let _ = window.show();
-          let _ = window.set_focus();
+          if !is_minimized {
+            let _ = window.show();
+            let _ = window.set_focus();
+          }
       }
       Ok(())
     })

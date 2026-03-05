@@ -4,6 +4,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 
 
 interface SettingsProps {
@@ -23,9 +24,11 @@ export default function Settings({ onBack }: SettingsProps) {
     const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
     const [updateStatusText, setUpdateStatusText] = useState('Check for Updates');
     const [appVersion, setAppVersion] = useState('');
+    const [autoStartEnabled, setAutoStartEnabled] = useState(false);
 
     useEffect(() => {
         getVersion().then(v => setAppVersion(v));
+        isEnabled().then(enabled => setAutoStartEnabled(enabled)).catch(console.error);
     }, []);
 
     useEffect(() => {
@@ -122,6 +125,20 @@ export default function Settings({ onBack }: SettingsProps) {
         }
     };
 
+    const toggleAutoStart = async () => {
+        try {
+            if (autoStartEnabled) {
+                await disable();
+                setAutoStartEnabled(false);
+            } else {
+                await enable();
+                setAutoStartEnabled(true);
+            }
+        } catch (error) {
+            console.error('Failed to toggle autostart:', error);
+        }
+    };
+
     return (
         <>
             <div className="header" onMouseDown={() => getCurrentWindow().startDragging()}>
@@ -158,6 +175,17 @@ export default function Settings({ onBack }: SettingsProps) {
                     <p style={{ margin: '6px 0 0 26px', fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
                         Made by <a href="https://www.vcreative.it" target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>vcreative.it</a>
                     </p>
+                </div>
+
+                <div className="settings-group fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <label style={{ margin: 0, fontSize: '12px' }}>Run on Startup</label>
+                        <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Launch PhrasePop automatically in the background when your computer starts.</p>
+                    </div>
+                    <label className="switch">
+                        <input type="checkbox" checked={autoStartEnabled} onChange={toggleAutoStart} />
+                        <span className="slider round"></span>
+                    </label>
                 </div>
 
                 <div className="settings-group">
