@@ -20,8 +20,8 @@ phrasePop is a background application that brings AI to *any* text field across 
 * **Smart Replier (Persona Engine):** Draft perfectly tailored replies to incoming messages just by highlighting them. Configure your personalized "Persona" so the AI responds precisely as you would.
 * **Instant Native UI & Premium Aesthetics:** Built with Tauri + Rust + React. Native performance, tiny memory footprint, opens instantly and hides on blur just like a spotlight search. Dark mode glassmorphism overlay masking over your OS elements.
 * **Bring Your Own AI:**
-  * *Local & Private:* Connects gracefully to [Ollama](https://ollama.com/) (defaults to `llama3`) so your private reading doesn't leave your machine.
-  * *Cloud Providers:* Native support for OpenAI's cutting edge APIs via API Key support.
+  * *Local & Private:* Native support for [Ollama](https://ollama.com/) and [LM Studio](https://lmstudio.ai/) for maximum privacy.
+  * *Cloud Providers:* Native support for OpenAI's cutting-edge APIs.
 * **In-App Auto-Updater:** Never redownload an installer. Pull the latest phrasePop features seamlessly from the Settings panel.
 
 ## 🚀 Installation
