@@ -125,6 +125,92 @@ async fn generate_ollama(ollama_url: String, model: String, prompt: String) -> R
     Ok(json.response)
 }
 
+#[tauri::command]
+async fn get_openai_models(url: String, api_key: Option<String>) -> Result<Vec<String>, String> {
+    let client = reqwest::Client::new();
+    let mut request = client.get(format!("{}/models", url.trim_end_matches('/')));
+    
+    if let Some(key) = api_key {
+        if !key.trim().is_empty() {
+            request = request.bearer_auth(key);
+        }
+    }
+    
+    let res = request.send()
+        .await
+        .map_err(|e| format!("Failed to connect to AI provider: {}", e))?;
+        
+    if !res.status().is_success() {
+        return Err(format!("AI provider returned error: {}", res.status()));
+    }
+    
+    let json: serde_json::Value = res.json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        
+    let mut models = Vec::new();
+    if let Some(data) = json.get("data").and_then(|d| d.as_array()) {
+        for model in data {
+            if let Some(id) = model.get("id").and_then(|i| i.as_str()) {
+                models.push(id.to_string());
+            }
+        }
+    }
+    
+    Ok(models)
+}
+
+#[tauri::command]
+async fn generate_openai(url: String, model: String, prompt: String, api_key: Option<String>) -> Result<String, String> {
+    let base_url = url.trim_end_matches('/');
+    let full_url = if base_url.ends_with("/chat/completions") {
+        base_url.to_string()
+    } else {
+        format!("{}/chat/completions", base_url)
+    };
+
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(45))
+        .build()
+        .map_err(|e| format!("Failed to build client: {}", e))?;
+        
+    let mut request = client.post(&full_url)
+        .json(&serde_json::json!({
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}]
+        }));
+        
+    if let Some(key) = api_key {
+        if !key.trim().is_empty() {
+            request = request.bearer_auth(key);
+        }
+    }
+        
+    let res = request.send()
+        .await
+        .map_err(|e| format!("Failed to connect to AI provider: {}", e))?;
+        
+    if !res.status().is_success() {
+        let error_text = res.text().await.unwrap_or_default();
+        return Err(format!("AI provider error: {}", error_text));
+    }
+    
+    let parsed: serde_json::Value = res.json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        
+    if let Some(choices) = parsed.get("choices") {
+        if let Some(first_choice) = choices.get(0) {
+            if let Some(message) = first_choice.get("message") {
+                if let Some(content) = message.get("content") {
+                    return Ok(content.as_str().unwrap_or_default().trim().to_string());
+                }
+            }
+        }
+    }
+    Err("Unexpected response structure from AI provider".to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -156,7 +242,15 @@ pub fn run() {
             })
             .build(),
     )
-    .invoke_handler(tauri::generate_handler![capture_text, set_clipboard, hide_window, get_ollama_models, generate_ollama])
+    .invoke_handler(tauri::generate_handler![
+        capture_text, 
+        set_clipboard, 
+        hide_window, 
+        get_ollama_models, 
+        generate_ollama,
+        get_openai_models,
+        generate_openai
+    ])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

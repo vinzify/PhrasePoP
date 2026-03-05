@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
 export interface AIConfig {
-    provider: 'Ollama' | 'OpenAI';
+    provider: 'Ollama' | 'OpenAI' | 'LM Studio';
     ollamaUrl: string;
     model: string;
     openAiKey: string;
@@ -67,6 +67,21 @@ export async function generateAI(
     onChunk: (chunk: string) => void
 ): Promise<void> {
     const prompt = buildPrompt(text, mode, config.persona);
+
+    if (config.provider === 'LM Studio') {
+        try {
+            const response = await invoke<string>('generate_openai', {
+                url: config.ollamaUrl || 'http://localhost:1234/v1',
+                model: config.model,
+                prompt: prompt,
+                apiKey: null
+            });
+            onChunk(response);
+            return;
+        } catch (e: any) {
+            throw new Error(e);
+        }
+    }
 
     if (config.provider === 'Ollama') {
         try {

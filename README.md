@@ -47,7 +47,13 @@ If you want to ensure your private emails never leave your device:
 2. Run `ollama pull llama3` (or your preferred text model) in your terminal.
 3. Keep Ollama running (`localhost:11434`), highlight some text, hit `Ctrl+Alt+C`, and click **Enhance**.
 
-#### Option 2: Cloud OpenAI integration
+#### Option 2: Local LM Studio
+PhrasePoP now natively supports model discovery for LM Studio.
+1. Download and launch [LM Studio](https://lmstudio.ai/).
+2. Start the Local Server (usually `localhost:1234`).
+3. In PhrasePoP Settings, select **LM Studio** and click the refresh icon to see your loaded models.
+
+#### Option 3: Cloud OpenAI integration
 PhrasePoP natively supports OpenAI connections for bleeding-edge intelligence.
 1. Enter the settings view via the ⚙️ icon in phrasePop.
 2. Select **OpenAI**.

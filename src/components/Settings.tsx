@@ -43,16 +43,19 @@ export default function Settings({ onBack }: SettingsProps) {
     }, []);
 
     useEffect(() => {
-        if (provider === 'Ollama' && ollamaUrl) {
+        if ((provider === 'Ollama' || provider === 'LM Studio') && ollamaUrl) {
             import('@tauri-apps/api/core').then(({ invoke }) => {
-                invoke<string[]>('get_ollama_models', { ollamaUrl })
+                const command = provider === 'Ollama' ? 'get_ollama_models' : 'get_openai_models';
+                const args = provider === 'Ollama' ? { ollamaUrl } : { url: ollamaUrl, apiKey: null };
+
+                invoke<string[]>(command, args)
                     .then(models => {
                         setOllamaModels(models);
                         if (models.length > 0 && !models.includes(model)) {
                             setModel(models[0]);
                         }
                     })
-                    .catch(err => console.error('Failed to get ollama models', err));
+                    .catch(err => console.error('Failed to get models', err));
             });
         }
     }, [provider, ollamaUrl]);
@@ -159,8 +162,17 @@ export default function Settings({ onBack }: SettingsProps) {
 
                 <div className="settings-group">
                     <label>AI Provider</label>
-                    <select value={provider} onChange={e => setProvider(e.target.value)}>
+                    <select value={provider} onChange={e => {
+                        const newProvider = e.target.value;
+                        setProvider(newProvider);
+                        if (newProvider === 'LM Studio' && ollamaUrl === 'http://localhost:11434') {
+                            setOllamaUrl('http://localhost:1234/v1');
+                        } else if (newProvider === 'Ollama' && ollamaUrl === 'http://localhost:1234/v1') {
+                            setOllamaUrl('http://localhost:11434');
+                        }
+                    }}>
                         <option value="Ollama">Ollama (Local/Privacy)</option>
+                        <option value="LM Studio">LM Studio (Local)</option>
                         <option value="OpenAI">OpenAI</option>
                     </select>
                 </div>
@@ -182,14 +194,14 @@ export default function Settings({ onBack }: SettingsProps) {
                     </select>
                 </div>
 
-                {provider === 'Ollama' ? (
+                {(provider === 'Ollama' || provider === 'LM Studio') ? (
                     <>
                         <div className="settings-group fade-in-up">
-                            <label>Ollama Base URL</label>
-                            <input value={ollamaUrl} onChange={e => setOllamaUrl(e.target.value)} />
+                            <label>{provider} Base URL</label>
+                            <input value={ollamaUrl} onChange={e => setOllamaUrl(e.target.value)} placeholder={provider === 'LM Studio' ? "http://localhost:1234/v1" : "http://localhost:11434"} />
                         </div>
                         <div className="settings-group fade-in-up">
-                            <label>Ollama Model Name</label>
+                            <label>{provider} Model Name</label>
                             <select value={model} onChange={e => setModel(e.target.value)}>
                                 {model && !["llama3.2", "llama3.1", "llama3", "mistral", "qwen2.5-coder", "deepseek-coder"].includes(model) && (
                                     <option value={model}>{model} (Custom)</option>
