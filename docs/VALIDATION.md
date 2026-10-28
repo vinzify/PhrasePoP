@@ -6,8 +6,9 @@ browser-flow checks use the local Brave executable through Playwright.
 
 ## Passed locally
 
-- 3 Rust tests: Wayland detection, text-size/empty clipboard validation, native
-  shortcut parsing. No real clipboard content is used in unit tests.
+- 4 Rust tests: Wayland detection, text-size/empty clipboard validation, native
+  shortcut parsing, and HTTP capability matching for default/custom ports,
+  localhost IPv4/IPv6, and HTTPS. No real clipboard content is used in unit tests.
 - 11 domain/stream tests: legacy/corrupt preferences, dark default and saved Light,
   exclusion of API keys from storage, persona scope, URL validation, configured
   provider/model, one-byte UTF-8/SSE/NDJSON chunking, EOF, malformed/truncated/empty
@@ -25,10 +26,22 @@ clipboard launch flag. The window remains open on KDE Wayland; Settings and its
 desktop guidance are accessible. The optional AT-SPI smoke helper checks the
 default Dark choice and opens/closes Settings.
 
-An attempted deeper native provider-flow check could not edit form fields:
-this WebKit AT-SPI implementation exposes Text but not EditableText for these
-controls. It was not counted as a passing native HTTP/generation test. The helper
-therefore checks read-only startup/settings behaviour, not provider submission.
+A deeper WebKitWebDriver check exercised the actual native UI and Tauri Rust HTTP
+backend against a synthetic localhost server on a dynamically chosen port. NDJSON
+generation returned Unicode text to the result pane; stopping a second streaming
+request preserved both the source and partial result. This caught and fixed a
+capability pattern that incorrectly rejected non-default provider ports.
+
+Reproduce on a Linux desktop with a matching `WebKitWebDriver` installed:
+
+```sh
+node scripts/native-provider.mjs
+# Or set WEBKIT_WEBDRIVER to the matching driver executable.
+```
+
+This is a transport fixture, not a live model-quality or paid-provider test. The
+AT-SPI helper separately checks read-only startup/settings behaviour because this
+WebKit implementation does not expose EditableText for form controls.
 
 The host also emitted a libayatana-appindicator deprecation warning from the tray
 dependency. Startup/settings remained usable; the warning is not suppressed.

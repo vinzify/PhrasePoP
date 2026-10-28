@@ -13,6 +13,8 @@ workflow to Linux, Windows, and macOS.
 - Configurable shortcuts where supported; desktop-assigned `phrasepop --clipboard`
   on Wayland; optional tray/autostart with graceful fallback.
 - Fixed LM Studio/model selection and incremental SSE/NDJSON/UTF-8 stream decoding.
+- Fixed native HTTP permissions for local and custom-port provider endpoints;
+  verified generation and cancellation through the real Linux desktop app.
 - Cancel generation, preserve newer drafts, and keep partial responses visible on errors.
 - Session-only API keys, with legacy plaintext removal when settings are saved.
 - Refreshed README, screenshots, automated checks, and draft-only release workflow.

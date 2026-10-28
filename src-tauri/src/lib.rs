@@ -221,6 +221,52 @@ pub fn run() {
 mod tests {
     use super::*;
     #[test]
+    fn provider_scope_accepts_default_and_custom_ports() {
+        use tauri_plugin_http::reqwest::Url;
+        use urlpattern::{UrlPattern, UrlPatternMatchInput};
+        let capability: serde_json::Value =
+            serde_json::from_str(include_str!("../capabilities/default.json")).unwrap();
+        let scope = capability["permissions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["identifier"] == "http:default")
+            .unwrap();
+        let patterns: Vec<UrlPattern> = scope["allow"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|entry| {
+                let init = urlpattern::UrlPatternInit::parse_constructor_string::<regex::Regex>(
+                    entry["url"].as_str().unwrap(),
+                    None,
+                )
+                .unwrap();
+                UrlPattern::parse(init, Default::default()).unwrap()
+            })
+            .collect();
+        let allowed = |address: &str| {
+            patterns.iter().any(|pattern| {
+                pattern
+                    .test(UrlPatternMatchInput::Url(Url::parse(address).unwrap()))
+                    .unwrap()
+            })
+        };
+        for address in [
+            "http://localhost:11434/api/generate",
+            "http://127.0.0.1:1234/v1/models",
+            "http://[::1]:11434/api/tags",
+            "http://127.0.0.1:46797/api/generate",
+            "https://api.openai.com/v1/chat/completions",
+            "https://provider.example:8443/v1/models",
+            "http://provider.example/api/tags",
+        ] {
+            assert!(allowed(address), "Provider endpoint blocked: {address}");
+        }
+        assert!(!allowed("file:///tmp/example"));
+        assert!(!allowed("ftp://provider.example/model"));
+    }
+    #[test]
     fn wayland_detection_does_not_depend_on_xwayland_display() {
         assert!(wayland(Some("wayland"), None));
         assert!(wayland(None, Some("wayland-0")));

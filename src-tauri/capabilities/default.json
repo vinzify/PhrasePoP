@@ -7,7 +7,7 @@
   ],
   "permissions": [
     "core:default",
-    { "identifier": "http:default", "allow": [{ "url": "http://**" }, { "url": "https://**" }] },
+    { "identifier": "http:default", "allow": [{ "url": "http://*:*/*" }, { "url": "https://*:*/*" }] },
     "autostart:default",
     "process:allow-restart",
     "updater:default"

@@ -35,6 +35,10 @@ tauri-plugin-single-instance = "2.4.0"
 tauri-plugin-http = "2"
 tauri-plugin-autostart = "2.5.1"
 
+[dev-dependencies]
+regex = "1"
+urlpattern = "0.3"
+
 [profile.release]
 lto = true
 codegen-units = 1
