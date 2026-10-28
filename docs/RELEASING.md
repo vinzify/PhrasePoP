@@ -1,5 +1,18 @@
 # Release checklist
 
+## Packaging details
+
+Preview MSI versions must be numeric: the workflow maps `X.Y.Z-beta.N` to
+`X.Y.Z.N` and stable `X.Y.Z` to `X.Y.Z.65535` through an installer-only WiX
+override. App/updater semantic versions remain unchanged. Use the same override
+when bundling an MSI directly from a beta source checkout.
+
+Platform jobs upload packages and signatures only. A single final job requires
+all four builds and creates the complete `latest.json`, avoiding parallel
+metadata writers. Verify every signature, upload SHA256SUMS, and copy this
+manifest to `preview.json` on main before publishing the draft as a prerelease
+with `--latest=false`. The old stable channel must remain untouched.
+
 This tree is the 1.2.0-beta.1 cross-platform preview. Existing 1.1.x stable assets
 remain Windows builds, on their original update channel. Preview builds use a
 separate `preview.json` channel and a rotated public signing key.

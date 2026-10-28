@@ -42,6 +42,7 @@ downloads. Verify SHA256SUMS from this release before installing.
 Copy text first, then open the app. Automatic selection capture is intentionally
 not part of this preview. Wayland clipboard import depends on compositor support;
 direct paste/type remains available. Live provider and native clipboard/shortcut
-behaviour across all desktops still require field testing. See docs/VALIDATION.md.
+behaviour across all desktops still require field testing. See the
+[validation record](https://github.com/vinzify/PhrasePoP/blob/main/docs/VALIDATION.md).
 
 No real emails, clipboard values, or paid AI calls were used for test fixtures.

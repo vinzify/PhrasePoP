@@ -1,5 +1,7 @@
 # PhrasePoP
 
+[![Checks](https://github.com/vinzify/PhrasePoP/actions/workflows/ci.yml/badge.svg)](https://github.com/vinzify/PhrasePoP/actions/workflows/ci.yml)
+
 ### Your thought. A clearer expression.
 
 A clipboard-first desktop writing assistant. Refine a sentence, change its tone,
@@ -11,7 +13,7 @@ or draft a reply in your own voice—with a local model or your chosen cloud pro
 
 *Actual interface, captured with fictional text and mocked network responses.*
 
-> **1.2 preview:** Linux, Windows, and macOS packages are being validated for
+> **1.2 preview available:** Download Linux, Windows, and macOS packages from
 > [v1.2.0-beta.1](https://github.com/vinzify/PhrasePoP/releases/tag/v1.2.0-beta.1).
 > Existing 1.1.x users must install this preview manually following the signing-key
 > rotation. The old stable update channel is unchanged.
@@ -115,6 +117,16 @@ stored locally; input/result text is not saved as history.
 
 Install stable Rust 1.90 or newer, Node.js 22, and your platform's
 [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+
+On Ubuntu/Debian-based development machines, install the native dependencies:
+
+```sh
+sudo apt-get update
+sudo apt-get install libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libssl-dev libwayland-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+```
+
+Then:
 
 ```sh
 git clone https://github.com/vinzify/PhrasePoP.git

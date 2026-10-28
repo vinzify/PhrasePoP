@@ -4,6 +4,26 @@ Recorded on 2026-10-28. Host: Ubuntu 26.04.1 LTS, KDE Wayland, x86_64; Rust
 1.94.1, WebKitGTK 2.52.6. Frontend checks use isolated Node.js 22 tooling;
 browser-flow checks use the local Brave executable through Playwright.
 
+## Release packages
+
+[The packaging workflow passed](https://github.com/vinzify/PhrasePoP/actions/runs/40706344129)
+for Linux x86_64, Windows x64, and both macOS architectures. Updater/package
+signatures were independently checked against the rotated public key, and the
+four-platform manifest was checked against the downloaded artifacts. The release
+includes SHA256SUMS for all assets.
+
+The actual Ubuntu 22.04-built Debian package was extracted on the host above.
+Its version/dependency metadata was checked, and the packaged executable passed
+the native provider/cancellation fixture below. This was not a system-wide install
+and does not claim native Windows/macOS interaction coverage.
+
+## Cross-platform CI
+
+[The release-source checks passed](https://github.com/vinzify/PhrasePoP/actions/runs/40705232349)
+for commit `407ab43`, tagged `v1.2.0-beta.1`: frontend tests/lint/formatting/build
+and Rust tests/formatting/Clippy on Ubuntu 22.04, Windows, and macOS, plus Chromium
+interface tests. Hosted builds do not establish native desktop interaction support.
+
 ## Passed locally
 
 - 4 Rust tests: Wayland detection, text-size/empty clipboard validation, native
@@ -54,10 +74,10 @@ test settings were removed after each native smoke run.
 - Live local/cloud generation and cancellation through a native installed build.
 - Actual clipboard import/copy ownership on each compositor and OS, including
   pasting after the window closes; no blanket Wayland compositor claim is made.
-- X11, Windows, and macOS desktop behaviour. CI is configured but has not run for
-  this unpublished local change.
+- X11, Windows, and macOS desktop behaviour beyond the hosted checks above.
 - Native shortcut registration/conflict recovery, tray/desktop integration,
   autostart, updater installation/relaunch, signing/notarization, and upgrades.
 
-See [RELEASING.md](RELEASING.md). This is not a public release or a claim that
-every Linux desktop has been exercised.
+See [RELEASING.md](RELEASING.md). This remains a preview, not a claim that every
+Linux desktop has been exercised. Older clients must install it manually after
+the signing-key rotation; automatic upgrade/relaunch remains a validation gap.
