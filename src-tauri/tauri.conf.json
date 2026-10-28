@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "phrasePop",
-  "version": "1.1.22",
+  "version": "1.2.0-beta.1",
   "identifier": "com.vinzify.phrasepop",
   "build": {
     "frontendDist": "../dist",
@@ -11,10 +11,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg2MjVDQkZFRjlCNTJGMkMKUldRc0w3WDUvc3NsaGhGbExyV1diWHhtMVY5ZWd2VEF2a0ZqTUJGWnM5TVpDRTI5SmhCbVZwcEsK",
-      "privateKey": "../phrasepop.key",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJFNTNCQjgwMzlCNzQ5NzEKUldSeFNiYzVnTHRUTGlCOVdmeGpOcmoxOE5nSnkzdDJGNFZOdnBLb0VnSUhHbmZWalNWNlRYLysK",
       "endpoints": [
-        "https://github.com/vinzify/PhrasePoP/releases/latest/download/latest.json"
+        "https://raw.githubusercontent.com/vinzify/PhrasePoP/main/preview.json"
       ]
     }
   },
@@ -23,19 +22,21 @@
       {
         "title": "phrasePop",
         "width": 800,
-        "height": 600,
-        "resizable": false,
+        "height": 700,
+        "minWidth": 640,
+        "minHeight": 560,
+        "resizable": true,
         "fullscreen": false,
-        "transparent": true,
-        "decorations": false,
-        "alwaysOnTop": true,
+        "transparent": false,
+        "decorations": true,
+        "alwaysOnTop": false,
         "visible": false,
         "center": true,
         "shadow": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
     }
   },
   "bundle": {

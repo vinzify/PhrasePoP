@@ -1,341 +1,245 @@
 use arboard::Clipboard;
-use enigo::{Enigo, Key, Keyboard, Settings, Direction};
-use std::thread;
-use std::time::Duration;
-#[cfg(target_os = "macos")]
-use tauri_plugin_autostart::MacosLauncher;
-
-use tauri::{AppHandle, Manager, Emitter};
+use serde::Serialize;
+use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri_plugin_global_shortcut::ShortcutState;
+use tauri::tray::TrayIconBuilder;
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
-#[tauri::command]
-fn capture_text() -> Result<String, String> {
-    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
-    
-    // Explicitly release the shortcut triggers so they don't break the global copy command
-    let _ = enigo.key(Key::Alt, Direction::Release);
-    let _ = enigo.key(Key::Control, Direction::Release);
-    let _ = enigo.key(Key::Shift, Direction::Release);
+struct ClipboardState(Arc<Mutex<Option<Clipboard>>>);
+#[derive(Clone, Serialize)]
+struct DesktopInfo {
+    platform: String,
+    wayland: bool,
+    shortcut_supported: bool,
+    shortcut: String,
+    shortcut_note: String,
+    clipboard_requested: bool,
+}
+struct DesktopState(Mutex<DesktopInfo>);
 
-    // Give it a tiny moment to un-register physically held keys
-    thread::sleep(Duration::from_millis(50));
+fn wayland(session: Option<&str>, display: Option<&str>) -> bool {
+    session == Some("wayland") || display.is_some_and(|value| !value.is_empty())
+}
 
-    let _ = enigo.key(Key::Control, Direction::Press);
-    let _ = enigo.key(Key::Unicode('c'), Direction::Click);
-    let _ = enigo.key(Key::Control, Direction::Release);
-    
-    // Give the OS a tiny moment to copy the text to clipboard
-    thread::sleep(Duration::from_millis(150));
-    
-    let mut clipboard = Clipboard::new().map_err(|e| e.to_string())?;
-    let text = clipboard.get_text().map_err(|e| e.to_string())?;
+fn valid_text(text: String) -> Result<String, String> {
+    if text.len() > 200_000 {
+        return Err("Clipboard text is too large. Paste a shorter excerpt (up to 200 KB).".into());
+    }
+    if text.trim().is_empty() {
+        return Err(
+            "No text is available. Copy some text first, or paste/type directly in PhrasePoP."
+                .into(),
+        );
+    }
     Ok(text)
 }
 
 #[tauri::command]
-fn set_clipboard(text: String) -> Result<(), String> {
-    let mut clipboard = Clipboard::new().map_err(|e| e.to_string())?;
-    clipboard.set_text(text).map_err(|e| e.to_string())?;
+async fn read_clipboard(state: tauri::State<'_, ClipboardState>) -> Result<String, String> {
+    let state = state.0.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut clipboard = state.lock().map_err(|_| "Clipboard is busy.")?;
+        if clipboard.is_none() { *clipboard = Some(Clipboard::new().map_err(|_| "Clipboard access is unavailable. Paste into the input field instead.")?); }
+        let text = clipboard.as_mut().ok_or("Clipboard unavailable.")?.get_text()
+            .map_err(|_| "No readable clipboard text. Copy some text first, or paste directly into the input field.")?;
+        valid_text(text)
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn set_clipboard(
+    text: String,
+    state: tauri::State<'_, ClipboardState>,
+) -> Result<(), String> {
+    let state = state.0.clone();
+    let text = valid_text(text)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut clipboard = state.lock().map_err(|_| "Clipboard is busy.")?;
+        if clipboard.is_none() {
+            *clipboard = Some(Clipboard::new().map_err(|_| {
+                "Clipboard access is unavailable. Select and copy the result manually."
+            })?);
+        }
+        clipboard
+            .as_mut()
+            .ok_or("Clipboard unavailable.")?
+            .set_text(text)
+            .map_err(|_| {
+                "Could not write to the clipboard. Select and copy the result manually.".into()
+            })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn get_desktop_info(state: tauri::State<'_, DesktopState>) -> Result<DesktopInfo, String> {
+    state
+        .0
+        .lock()
+        .map(|info| info.clone())
+        .map_err(|_| "Desktop preferences are busy.".into())
+}
+
+fn preferences(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    app.path()
+        .app_config_dir()
+        .map(|path| path.join("shortcut.json"))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_shortcut(
+    app: AppHandle,
+    shortcut: String,
+    state: tauri::State<'_, DesktopState>,
+) -> Result<(), String> {
+    let mut info = state
+        .0
+        .lock()
+        .map_err(|_| "Desktop preferences are busy.")?;
+    if !info.shortcut_supported {
+        return Err(info.shortcut_note.clone());
+    }
+    let parsed: tauri_plugin_global_shortcut::Shortcut = shortcut
+        .parse()
+        .map_err(|_| "Enter a valid shortcut, for example Ctrl+Alt+C.")?;
+    if !info.shortcut.is_empty() {
+        app.global_shortcut()
+            .unregister(info.shortcut.as_str())
+            .map_err(|e| e.to_string())?;
+    }
+    if let Err(error) = app.global_shortcut().register(parsed) {
+        if !info.shortcut.is_empty() {
+            let _ = app.global_shortcut().register(info.shortcut.as_str());
+        }
+        return Err(format!(
+            "Could not register shortcut: {error}. Choose an unused combination."
+        ));
+    }
+    let path = preferences(&app)?;
+    let saved = (|| {
+        std::fs::create_dir_all(path.parent().ok_or("Invalid settings path.")?)
+            .map_err(|e| e.to_string())?;
+        std::fs::write(
+            &path,
+            serde_json::to_vec(&shortcut).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())
+    })();
+    if let Err(error) = saved {
+        let _ = app.global_shortcut().unregister(parsed);
+        if !info.shortcut.is_empty() {
+            let _ = app.global_shortcut().register(info.shortcut.as_str());
+        }
+        return Err(error);
+    }
+    info.shortcut = shortcut;
     Ok(())
 }
 
-#[tauri::command]
-fn hide_window(app: AppHandle) {
+fn show(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        let _ = window.hide();
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }
 
-#[derive(serde::Deserialize)]
-struct OllamaTagsResponse {
-    models: Vec<OllamaModel>,
-}
-
-#[derive(serde::Deserialize)]
-struct OllamaModel {
-    name: String,
-}
-
-#[tauri::command]
-async fn get_ollama_models(ollama_url: String) -> Result<Vec<String>, String> {
-    let url = format!("{}/api/tags", ollama_url.trim_end_matches('/'));
-    
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to build client: {}", e))?;
-        
-    let res = client.get(&url)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
-        
-    if !res.status().is_success() {
-        return Err(format!("Ollama returned error: {}", res.status()));
-    }
-    
-    let json: OllamaTagsResponse = res.json()
-        .await
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
-        
-    let models = json.models.into_iter().map(|m| m.name).collect();
-    Ok(models)
-}
-
-#[derive(serde::Serialize)]
-struct OllamaGenerateRequest {
-    model: String,
-    prompt: String,
-    stream: bool,
-}
-
-#[derive(serde::Deserialize)]
-struct OllamaGenerateResponse {
-    response: String,
-}
-
-#[tauri::command]
-async fn generate_ollama(ollama_url: String, model: String, prompt: String) -> Result<String, String> {
-    let url = format!("{}/api/generate", ollama_url.trim_end_matches('/'));
-    
-    // Large models (e.g. Qwen 3.5, Llama 3 70B) take significant time to load from disk to VRAM. 
-    // Expanding the timeout to 120 seconds prevents "Failed to reach Ollama" proxy errors during cold boots.
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(120))
-        .build()
-        .map_err(|e| format!("Failed to build client: {}", e))?;
-        
-    let res = client.post(&url)
-        .json(&OllamaGenerateRequest {
-            model,
-            prompt,
-            stream: false,
-        })
-        .send()
-        .await
-        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
-        
-    if !res.status().is_success() {
-        return Err(format!("Ollama returned error: {}", res.status()));
-    }
-    
-    let json: OllamaGenerateResponse = res.json()
-        .await
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
-        
-    Ok(json.response)
-}
-
-#[tauri::command]
-async fn get_openai_models(url: String, api_key: Option<String>) -> Result<Vec<String>, String> {
-    let client = reqwest::Client::new();
-    let mut request = client.get(format!("{}/models", url.trim_end_matches('/')));
-    
-    if let Some(key) = api_key {
-        if !key.trim().is_empty() {
-            request = request.bearer_auth(key);
-        }
-    }
-    
-    let res = request.send()
-        .await
-        .map_err(|e| format!("Failed to connect to AI provider: {}", e))?;
-        
-    if !res.status().is_success() {
-        return Err(format!("AI provider returned error: {}", res.status()));
-    }
-    
-    let json: serde_json::Value = res.json()
-        .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
-        
-    let mut models = Vec::new();
-    if let Some(data) = json.get("data").and_then(|d| d.as_array()) {
-        for model in data {
-            if let Some(id) = model.get("id").and_then(|i| i.as_str()) {
-                models.push(id.to_string());
-            }
-        }
-    }
-    
-    Ok(models)
-}
-
-#[tauri::command]
-async fn generate_openai(url: String, model: String, prompt: String, api_key: Option<String>) -> Result<String, String> {
-    let base_url = url.trim_end_matches('/');
-    let full_url = if base_url.ends_with("/chat/completions") {
-        base_url.to_string()
-    } else {
-        format!("{}/chat/completions", base_url)
-    };
-
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(45))
-        .build()
-        .map_err(|e| format!("Failed to build client: {}", e))?;
-        
-    let mut request = client.post(&full_url)
-        .json(&serde_json::json!({
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}]
-        }));
-        
-    if let Some(key) = api_key {
-        if !key.trim().is_empty() {
-            request = request.bearer_auth(key);
-        }
-    }
-        
-    let res = request.send()
-        .await
-        .map_err(|e| format!("Failed to connect to AI provider: {}", e))?;
-        
-    if !res.status().is_success() {
-        let error_text = res.text().await.unwrap_or_default();
-        return Err(format!("AI provider error: {}", error_text));
-    }
-    
-    let parsed: serde_json::Value = res.json()
-        .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
-        
-    if let Some(choices) = parsed.get("choices") {
-        if let Some(first_choice) = choices.get(0) {
-            if let Some(message) = first_choice.get("message") {
-                if let Some(content) = message.get("content") {
-                    return Ok(content.as_str().unwrap_or_default().trim().to_string());
-                }
-            }
-        }
-    }
-    Err("Unexpected response structure from AI provider".to_string())
-}
-
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
-    .plugin(tauri_plugin_http::init())
-    .plugin(tauri_plugin_updater::Builder::new().build())
-    .plugin(tauri_plugin_process::init())
-    .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-        let _ = app.get_webview_window("main").expect("no main window").show();
-        let _ = app.get_webview_window("main").expect("no main window").set_focus();
-    }))
-    .plugin(
-        tauri_plugin_global_shortcut::Builder::new()
-            .with_shortcuts(["ctrl+alt+c"])
-            .expect("Failed to register shortcut")
-            .with_handler(|app, shortcut, event| {
-                if event.state() == ShortcutState::Released {
-                    if let Some(window) = app.get_webview_window("main") {
-                        std::thread::spawn(move || {
-                            // Ensure Ctrl+C goes to the active window BEFORE we steal focus
-                            let text = capture_text().unwrap_or_else(|_| "".to_string());
-                            
-                            // Now we safely show the phrasePop window with the captured text
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.emit("open-phrase-pop", text);
-                        });
+    let session = std::env::var("XDG_SESSION_TYPE").ok();
+    let display = std::env::var("WAYLAND_DISPLAY").ok();
+    let is_wayland = cfg!(target_os = "linux") && wayland(session.as_deref(), display.as_deref());
+    let clipboard_requested = std::env::args().any(|arg| arg == "--clipboard");
+    let info = DesktopInfo {
+        platform: std::env::consts::OS.into(),
+        wayland: is_wayland,
+        shortcut_supported: !is_wayland,
+        shortcut: String::new(),
+        shortcut_note: if is_wayland {
+            "On Wayland, assign a desktop shortcut to phrasepop --clipboard. Automatic cross-app selection capture is not used.".into()
+        } else {
+            "Copy text first. The shortcut opens PhrasePoP and requests the clipboard; it does not simulate keystrokes.".into()
+        },
+        clipboard_requested,
+    };
+    tauri::Builder::default()
+        .manage(ClipboardState(Arc::new(Mutex::new(None))))
+        .manage(DesktopState(Mutex::new(info)))
+        .plugin(tauri_plugin_single_instance::init(|app, args, _| {
+            show(app);
+            if args.iter().any(|arg| arg == "--clipboard") { let _ = app.emit("clipboard-requested", ()); }
+        }))
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
+        .invoke_handler(tauri::generate_handler![read_clipboard, set_clipboard, get_desktop_info, set_shortcut])
+        .setup(move |app| {
+            if !is_wayland {
+                let plugin = tauri_plugin_global_shortcut::Builder::new().with_handler(|app, _, event| {
+                    if event.state() == ShortcutState::Released { show(app); let _ = app.emit("clipboard-requested", ()); }
+                }).build();
+                let installed = app.handle().plugin(plugin);
+                let initialized = installed.is_ok();
+                let default = if cfg!(target_os = "macos") { "Command+Alt+C" } else { "Ctrl+Alt+C" };
+                let shortcut = preferences(app.handle()).ok().and_then(|path| std::fs::read(path).ok())
+                    .and_then(|bytes| serde_json::from_slice::<String>(&bytes).ok()).unwrap_or(default.into());
+                let registered = installed.map_err(|e| e.to_string()).and_then(|_| app.global_shortcut().register(shortcut.as_str()).map_err(|e| e.to_string()));
+                if let Ok(mut info) = app.state::<DesktopState>().0.lock() {
+                    match registered {
+                        Ok(()) => info.shortcut = shortcut,
+                        Err(error) => { info.shortcut_supported = initialized; info.shortcut_note = if initialized { format!("Default shortcut unavailable: {error}. Choose another combination in Settings.") } else { format!("Global shortcut unavailable: {error}. Open the app normally and paste text.") }; }
                     }
                 }
-            })
-            .build(),
-    )
-    .invoke_handler(tauri::generate_handler![
-        capture_text, 
-        set_clipboard, 
-        hide_window, 
-        get_ollama_models, 
-        generate_ollama,
-        get_openai_models,
-        generate_openai
-    ])
-    .setup(|app| {
-      if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
-      }
-      
-      let autostart_plugin = tauri_plugin_autostart::init(
-          tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-          Some(vec!["--minimized"])
-      );
-      app.handle().plugin(autostart_plugin).unwrap();
+            }
+            let open = MenuItem::with_id(app, "open", "Open PhrasePoP", true, None::<&str>)?;
+            let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open, &settings, &quit])?;
+            let mut tray = TrayIconBuilder::new().menu(&menu).show_menu_on_left_click(true).on_menu_event(|app, event| match event.id.as_ref() {
+                "quit" => app.exit(0),
+                "settings" => { show(app); let _ = app.emit("open-settings", ()); },
+                _ => show(app),
+            });
+            if let Some(icon) = app.default_window_icon() { tray = tray.icon(icon.clone()); }
+            let tray_available = match tray.build(app) {
+                Ok(tray) => { app.manage(tray); true },
+                Err(error) => { eprintln!("Tray unavailable; using a normal desktop window: {error}"); false },
+            };
+            if let Some(window) = app.get_webview_window("main") {
+                if std::env::args().any(|arg| arg == "--minimized") && tray_available { let _ = window.hide(); }
+                else { let _ = window.show(); }
+            }
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running PhrasePoP");
+}
 
-      // Check if the app was launched with --minimized flag (e.g., from autostart)
-      let args: Vec<String> = std::env::args().collect();
-      let is_minimized = args.iter().any(|arg| arg == "--minimized");
-
-      let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-      let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-      let open_i = MenuItem::with_id(app, "open", "Open PhrasePop", true, None::<&str>)?;
-      let menu = Menu::with_items(app, &[&open_i, &settings_i, &quit_i])?;
-
-      let _tray = TrayIconBuilder::new()
-          .menu(&menu)
-          .show_menu_on_left_click(true)
-          .icon(app.default_window_icon().cloned().expect("Failed to get default icon"))
-          .on_menu_event(|app, event| match event.id.as_ref() {
-              "quit" => {
-                  app.exit(0);
-              }
-              "open" => {
-                  if let Some(window) = app.get_webview_window("main") {
-                      let _ = window.show();
-                      let _ = window.set_focus();
-                  }
-              }
-              "settings" => {
-                  if let Some(window) = app.get_webview_window("main") {
-                      let _ = window.show();
-                      let _ = window.set_focus();
-                      // Emit event to frontend to open settings
-                      let _ = app.emit("open-settings", ());
-                  }
-              }
-              _ => {}
-          })
-          .on_tray_icon_event(|tray, event| match event {
-              TrayIconEvent::Click {
-                  button: MouseButton::Left,
-                  button_state: MouseButtonState::Up,
-                  ..
-              } => {
-                  let app = tray.app_handle();
-                  if let Some(window) = app.get_webview_window("main") {
-                      let _ = window.show();
-                      let _ = window.set_focus();
-                  }
-              }
-              _ => {}
-          })
-          .build(app)?;
-
-      if let Some(window) = app.get_webview_window("main") {
-          let window_clone = window.clone();
-          window.on_window_event(move |event| {
-              if let tauri::WindowEvent::Focused(focused) = event {
-                  if !focused {
-                      let _ = window_clone.hide();
-                  }
-              }
-          });
-          
-          // Fix 1: Show the window explicitly on initial launch
-          if !is_minimized {
-            let _ = window.show();
-            let _ = window.set_focus();
-          }
-      }
-      Ok(())
-    })
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn wayland_detection_does_not_depend_on_xwayland_display() {
+        assert!(wayland(Some("wayland"), None));
+        assert!(wayland(None, Some("wayland-0")));
+        assert!(!wayland(Some("x11"), None));
+        assert!(!wayland(None, Some("")));
+    }
+    #[test]
+    fn clipboard_limits_are_explicit() {
+        assert!(valid_text(" ".into()).is_err());
+        assert!(valid_text("a".repeat(200_001)).is_err());
+        assert_eq!(valid_text("  hello è  ".into()).unwrap(), "  hello è  ");
+    }
+    #[test]
+    fn shortcut_validation_uses_native_parser() {
+        assert!("Ctrl+Alt+C"
+            .parse::<tauri_plugin_global_shortcut::Shortcut>()
+            .is_ok());
+        assert!("not a shortcut"
+            .parse::<tauri_plugin_global_shortcut::Shortcut>()
+            .is_err());
+    }
 }

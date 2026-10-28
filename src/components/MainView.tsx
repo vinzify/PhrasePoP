@@ -1,171 +1,251 @@
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Copy, Loader2, CheckCircle2, MessageSquareText } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { generateAI, type GenerationMode } from '../services/ai';
+import { ArrowRight, ClipboardPaste, Copy, Check, Square, Sparkles } from 'lucide-react';
+import { generateAI } from '../services/ai';
+import { errorText, modes, type AIConfig, type GenerationMode } from '../domain';
 
-interface MainViewProps {
-    onOpenSettings: () => void;
-    initialText: string;
-}
-
-export default function MainView({ onOpenSettings, initialText }: MainViewProps) {
-    const [inputText, setInputText] = useState(initialText);
-    const [outputText, setOutputText] = useState('');
-    const [tone, setTone] = useState('Professional');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('phrasepop-settings');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed.defaultTone) {
-                    setTone(parsed.defaultTone);
-                }
-            } catch (e) {
-                // Ignore parse errors
+export default function MainView({
+  config,
+  request,
+  onOpenSettings,
+}: {
+  config: AIConfig;
+  request: number;
+  onOpenSettings: () => void;
+}) {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState('');
+  const [tone, setTone] = useState<GenerationMode>(config.defaultTone);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState('');
+  const controller = useRef<AbortController | null>(null);
+  const busyRef = useRef(false);
+  const inputRef = useRef(input);
+  inputRef.current = input;
+  useEffect(() => {
+    setTone(config.defaultTone);
+  }, [config.defaultTone]);
+  useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    let disposed = false;
+    if (request > 0) {
+      if (busyRef.current || inputRef.current.trim())
+        setNotice(
+          'Clipboard requested. Your existing draft is safe; use Paste from clipboard when ready.',
+        );
+      else
+        void invoke<string>('read_clipboard')
+          .then((text) => {
+            if (!disposed) {
+              if (text.length > 50_000) setNotice('Use an excerpt of up to 50,000 characters.');
+              else if (!inputRef.current.trim() && !busyRef.current) setInput(text);
+              else
+                setNotice('Your draft changed while reading the clipboard. It was not replaced.');
             }
-        }
-    }, []);
-
-    useEffect(() => {
-        setInputText(initialText || '');
-        setOutputText(''); // Reset output when new text arrives
-    }, [initialText]);
-
-    const handleGenerate = async () => {
-        if (!inputText) return;
-        setIsGenerating(true);
-        setOutputText(''); // clear out old output
-
-        try {
-            const saved = localStorage.getItem('phrasepop-settings');
-            let config = {
-                provider: 'Ollama' as 'Ollama' | 'OpenAI',
-                ollamaUrl: 'http://localhost:11434',
-                model: 'llama3',
-                openAiKey: '',
-                persona: ''
-            };
-
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                config = { ...config, ...parsed };
-                // Fallbacks if older storage state left them strictly undefined/empty
-                if (!config.ollamaUrl) config.ollamaUrl = 'http://localhost:11434';
-                if (!config.model) config.model = 'llama3';
-                if (!config.provider || (config.provider !== 'OpenAI' && config.provider !== 'Ollama')) {
-                    config.provider = 'Ollama';
-                }
-            }
-
-            // We track the complete text locally because React state updates are asynchronous
-            let finalText = '';
-
-            await generateAI(inputText, tone as GenerationMode, config, (chunk) => {
-                finalText += chunk;
-                setOutputText(prev => prev + chunk);
-            });
-
-            // Automatically copy to clipboard when generation completes successfully
-            if (finalText) {
-                await invoke('set_clipboard', { text: finalText });
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000); // UI Feedback reset
-            }
-        } catch (err: any) {
-            console.error(err);
-            setOutputText(prev => prev + `\\n\\n[Error: ${err.message}]`);
-        } finally {
-            setIsGenerating(false);
-        }
+          })
+          .catch((error) => {
+            if (!disposed) setNotice(errorText(error));
+          });
+    }
+    return () => {
+      disposed = true;
     };
-
-    const handleCopy = async () => {
-        try {
-            if (outputText) {
-                await invoke('set_clipboard', { text: outputText });
-            } else if (inputText) {
-                await invoke('set_clipboard', { text: inputText });
-            }
-            setCopied(true);
-            setTimeout(async () => {
-                setCopied(false);
-                await invoke('hide_window'); // Hide after copy
-            }, 1000);
-        } catch (err) {
-            console.error("Failed to copy", err);
-        }
-    };
-
-    return (
-        <>
-            <div className="header" onMouseDown={() => getCurrentWindow().startDragging()}>
-                <div className="title-area">
-                    <h1>phrasePop</h1>
-                    <p>Highlight text anywhere, press Ctrl+Alt+C</p>
-                </div>
-                <button className="icon-btn" onClick={onOpenSettings} title="Settings">
-                    <SettingsIcon size={20} color="rgba(255,255,255,0.7)" />
-                </button>
-            </div>
-
-            <div className="text-io-container">
-                <div className="io-box">
-                    <span className="io-label">Context / Original Text</span>
-                    <textarea
-                        className="io-textarea"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Waiting for text... (Highlight and press Ctrl+Alt+C)"
-                    />
-                </div>
-
-                <div className="io-box">
-                    <span className="io-label">AI Response</span>
-                    <textarea
-                        className="io-textarea"
-                        value={outputText}
-                        readOnly
-                        placeholder="AI output will stream here..."
-                    />
-                </div>
-            </div>
-
-            <div className="action-bar">
-                <div className="tone-selector">
-                    <select
-                        value={tone}
-                        onChange={(e) => setTone(e.target.value)}
-                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: '6px', padding: '6px 10px', outline: 'none' }}
-                    >
-                        <option value="Professional">💼 Professional & Clear</option>
-                        <option value="Friendly">😊 Warm & Friendly</option>
-                        <option value="Concise">✂️ Concise & Direct</option>
-                        <option value="Persuasive">🤝 Sales & Persuasive</option>
-                        <option value="Academic">🎓 Academic & Formal</option>
-                        <option value="GenZ">📱 Gen Z Intern</option>
-                        <option value="Sarcastic">😒 Dry & Sarcastic</option>
-                        <option value="Pirate">🏴‍☠️ Pirate (Fun)</option>
-                        <option value="Shakespeare">🎭 Shakespeare</option>
-                        <option value="Yoda">👽 Master Yoda</option>
-                        <option value="SmartReply">💬 Smart Reply (Persona)</option>
-                    </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="secondary-btn" onClick={handleCopy} disabled={!inputText && !outputText}>
-                        {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                        <span>{copied ? 'Copied & Hidden' : 'Copy'}</span>
-                    </button>
-                    <button className="primary-btn" onClick={handleGenerate} disabled={!inputText || isGenerating}>
-                        {isGenerating ? <Loader2 size={16} className="spinning" /> : <MessageSquareText size={16} />}
-                        <span>{isGenerating ? 'Generating...' : 'Enhance'}</span>
-                    </button>
-                </div>
-            </div>
-        </>
-    );
+  }, [request]);
+  async function paste() {
+    if (busyRef.current) return;
+    if (input.trim()) {
+      setNotice(
+        'Clear the input before importing another clipboard item, or paste directly into the text field.',
+      );
+      return;
+    }
+    setNotice('');
+    try {
+      const text = await invoke<string>('read_clipboard');
+      if (text.length > 50_000) throw new Error('Use an excerpt of up to 50,000 characters.');
+      if (inputRef.current.trim() || busyRef.current)
+        throw new Error('Your draft changed while reading the clipboard. It was not replaced.');
+      setInput(text);
+      setOutput('');
+    } catch (error) {
+      setNotice(errorText(error));
+    }
+  }
+  async function generate() {
+    if (busyRef.current || !input.trim()) return;
+    busyRef.current = true;
+    setBusy(true);
+    setOutput('');
+    setNotice('');
+    setCopied(false);
+    const current = new AbortController();
+    controller.current = current;
+    try {
+      await generateAI(
+        input,
+        tone,
+        config,
+        (chunk) => {
+          if (!current.signal.aborted) setOutput((value) => value + chunk);
+        },
+        current.signal,
+      );
+      if (!current.signal.aborted) setNotice('Ready to review. Nothing was copied automatically.');
+    } catch (error) {
+      setNotice(
+        current.signal.aborted ? 'Stopped. Any partial text is kept for review.' : errorText(error),
+      );
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+  async function copy() {
+    try {
+      await invoke('set_clipboard', { text: output });
+      setCopied(true);
+      setNotice('Result copied. Your source text is unchanged.');
+    } catch (error) {
+      setNotice(errorText(error));
+    }
+  }
+  return (
+    <main className="writing-main">
+      <section className="intro">
+        <span className="eyebrow">WORDS, WITH A LITTLE MORE INTENTION</span>
+        <h1>
+          Your thought.
+          <br />
+          <em>A clearer expression.</em>
+        </h1>
+        <p>
+          A rewrite, a warmer tone, or a reply that sounds like you.
+          <br />
+          Keep the meaning. Lose the friction.
+        </p>
+      </section>
+      <div className="workspace-bar">
+        <div className="mode-picker">
+          <label htmlFor="writing-mode">MAKE IT</label>
+          <select
+            id="writing-mode"
+            value={tone}
+            disabled={busy}
+            onChange={(event) => setTone(event.target.value as GenerationMode)}
+          >
+            {modes.map((mode) => (
+              <option key={mode} value={mode}>
+                {mode === 'SmartReply' ? 'A reply in my voice' : mode}
+              </option>
+            ))}
+          </select>
+        </div>
+        <span className="provider-label">
+          {config.provider} <span> / </span>
+          {config.model || 'No model selected'}
+        </span>
+      </div>
+      <div className="writing-workspace">
+        <section className="text-panel source-panel">
+          <div className="panel-heading">
+            <label htmlFor="source-text">
+              <span className="panel-index">01</span> Your words
+            </label>
+            <button className="text-button" disabled={busy} onClick={paste}>
+              <ClipboardPaste size={14} />
+              Paste from clipboard
+            </button>
+          </div>
+          <textarea
+            id="source-text"
+            aria-label="Your words"
+            value={input}
+            disabled={busy}
+            maxLength={50_000}
+            onChange={(event) => {
+              setInput(event.target.value);
+              setOutput('');
+              setCopied(false);
+              setNotice('');
+            }}
+            placeholder="Paste something that could use a little clarity…"
+            spellCheck
+          />
+          <div className="panel-footer">
+            <span>{[...input].length.toLocaleString()} characters</span>
+            <button
+              className="text-button"
+              disabled={busy || !input}
+              onClick={() => {
+                setInput('');
+                setOutput('');
+                setNotice('');
+              }}
+            >
+              Clear input
+            </button>
+          </div>
+        </section>
+        <section className="text-panel result-panel">
+          <div className="panel-heading">
+            <label htmlFor="result-text">
+              <span className="panel-index">02</span> A fresh take
+            </label>
+            <span className="result-state">
+              {busy ? 'WRITING…' : output ? 'YOURS TO REVIEW' : 'NOTHING SENT YET'}
+            </span>
+          </div>
+          <textarea
+            id="result-text"
+            aria-label="A fresh take"
+            value={output}
+            readOnly
+            placeholder="A clearer version will appear here. You’re always the editor."
+            spellCheck={false}
+          />
+          <div className="panel-footer">
+            <span>
+              {output
+                ? [...output].length.toLocaleString() + ' characters'
+                : 'Your source stays intact'}
+            </span>
+            <button className="text-button" disabled={busy || !output} onClick={copy}>
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copied' : 'Copy result'}
+            </button>
+          </div>
+        </section>
+      </div>
+      <div className="writing-actions">
+        <p className="privacy-note">
+          Text is sent only when you click Improve,
+          <br />
+          to the provider you choose. No automatic clipboard changes.
+        </p>
+        {!config.model && (
+          <button className="secondary" onClick={onOpenSettings}>
+            Choose a model
+          </button>
+        )}
+        {busy ? (
+          <button className="primary stop-button" onClick={() => controller.current?.abort()}>
+            <Square size={14} />
+            Stop generating
+          </button>
+        ) : (
+          <button className="primary" disabled={!input.trim() || !config.model} onClick={generate}>
+            <Sparkles size={16} />
+            {tone === 'SmartReply' ? 'Draft a reply' : 'Improve this text'}
+            <ArrowRight size={16} />
+          </button>
+        )}
+      </div>
+      {notice && (
+        <p className="feedback" role="status">
+          {notice}
+        </p>
+      )}
+    </main>
+  );
 }
